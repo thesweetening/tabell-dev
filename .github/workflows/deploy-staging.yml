@@ -24,7 +24,7 @@ jobs:
       run: |
         if [ -f package.json ] && npm run build --if-present; then
           echo "Build completed"
-            fi
+        fi
     - name: Deploy to Staging Server via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
