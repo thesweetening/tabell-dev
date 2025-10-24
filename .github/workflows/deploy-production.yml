@@ -1,8 +1,8 @@
-name: Deploy to Staging
+name: Deploy to Production
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -15,21 +15,22 @@ jobs:
       
     - name: List files for debugging
       run: |
-        echo "=== Files to deploy ==="
+        echo "=== Production Deployment Files ==="
         ls -la
         find . -name "*.html" -o -name "*.css" -o -name "*.js"
         
-    - name: Deploy via FTP
+    - name: Deploy to Production via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
-        server: ${{ secrets.STAGING_FTP_SERVER }}
-        username: ${{ secrets.STAGING_FTP_USERNAME }}
-        password: ${{ secrets.STAGING_FTP_PASSWORD }}
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
         local-dir: ./
-        server-dir: /public_html/staging/
+        server-dir: ./
         exclude: |
           .git/**
           .github/**
           README.md
           SETUP.md
+          PROJECT-STATUS.md
           .gitignore
