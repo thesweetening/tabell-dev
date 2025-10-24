@@ -40,12 +40,16 @@ jobs:
         password: ${{ secrets.STAGING_FTP_PASSWORD }}
         local-dir: ./
         server-dir: /public_html/staging/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          .github/
-          README.md
-          package.json
-          package-lock.json
-          .gitignore
+       exclude: |
+  .git/**
+  .github/**
+  README.md
+  SETUP.md
+  .gitignore
+
+  - name: List files before deployment
+      run: |
+        echo "=== Files to deploy ==="
+        ls -la
+        find . -name "*.html" -o -name "*.css" -o -name "*.js"
+        
