@@ -1,0 +1,35 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: List files for debugging
+      run: |
+        echo "=== Files to deploy ==="
+        ls -la
+        find . -name "*.html" -o -name "*.css" -o -name "*.js"
+        
+    - name: Deploy via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.STAGING_FTP_SERVER }}
+        username: ${{ secrets.STAGING_FTP_USERNAME }}
+        password: ${{ secrets.STAGING_FTP_PASSWORD }}
+        local-dir: ./
+        server-dir: ./
+        exclude: |
+          .git/**
+          .github/**
+          README.md
+          SETUP.md
+          .gitignore
