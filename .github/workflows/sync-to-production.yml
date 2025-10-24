@@ -1,0 +1,67 @@
+name: Sync to Production Repository
+
+on:
+  # Trigger when changes are merged to main in tabell-dev
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      target_repo:
+        description: 'Target production repository'
+        required: true
+        default: 'thesweetening/tabell-live'
+
+jobs:
+  sync-to-production:
+    runs-on: ubuntu-latest
+    if: github.repository == 'thesweetening/tabell-dev'
+    
+    steps:
+    - name: Checkout tabell-dev
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.SYNC_TOKEN }}
+    
+    - name: Setup Git
+      run: |
+        git config --global user.name 'GitHub Actions'
+        git config --global user.email 'actions@github.com'
+    
+    - name: Clone production repository
+      run: |
+        git clone https://${{ secrets.SYNC_TOKEN }}@github.com/thesweetening/tabell-live.git production
+        cd production
+        git remote add staging ../
+        
+    - name: Sync changes to production
+      run: |
+        cd production
+        # Fetch latest changes from staging
+        git fetch staging main
+        
+        # Create sync branch
+        git checkout -b sync-from-staging-$(date +%Y%m%d-%H%M%S)
+        
+        # Copy files (excluding .github workflows)
+        rsync -av --delete \
+          --exclude='.git/' \
+          --exclude='.github/workflows/' \
+          --exclude='README.md' \
+          ../ ./
+        
+        # Commit changes if any
+        if git diff --staged --quiet && git diff --quiet; then
+          echo "No changes to sync"
+        else
+          git add .
+          git commit -m "Sync from tabell-dev: $(git log --oneline -1 staging/main)"
+          git push origin sync-from-staging-$(date +%Y%m%d-%H%M%S)
+          
+          echo "::notice::Sync branch created. Create a PR to merge to main in tabell-live"
+        fi
