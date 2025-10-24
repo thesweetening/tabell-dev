@@ -1,37 +1,30 @@
 name: Deploy to Staging (test.tabell.top)
-
 on:
   push:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
     - name: Setup Node.js (if needed for build)
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        
     - name: Install dependencies (if package.json exists)
       run: |
         if [ -f package.json ]; then
           npm install
-        fi
-        
+        fi       
     - name: Build project (if build script exists)
       run: |
         if [ -f package.json ] && npm run build --if-present; then
           echo "Build completed"
         fi
-    
     - name: Deploy to Staging Server via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -46,10 +39,8 @@ jobs:
   README.md
   SETUP.md
   .gitignore
-
   - name: List files before deployment
       run: |
         echo "=== Files to deploy ==="
         ls -la
-        find . -name "*.html" -o -name "*.css" -o -name "*.js"
-        
+        find . -name "*.html" -o -name "*.css" -o -name "*.js"    
