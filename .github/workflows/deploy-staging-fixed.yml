@@ -1,0 +1,47 @@
+name: Deploy to Staging (FIXED)
+
+on:
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: List files before deployment
+      run: |
+        echo "=== Files to be deployed ==="
+        find . -type f -not -path "./.git/*" -not -path "./.github/*" | head -20
+        echo "=== End file list ==="
+    
+    - name: Deploy to Staging Server via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      with:
+        server: ${{ secrets.STAGING_FTP_SERVER }}
+        username: ${{ secrets.STAGING_FTP_USERNAME }}
+        password: ${{ secrets.STAGING_FTP_PASSWORD }}
+        # Deploy from root directory
+        local-dir: ./
+        # Deploy to a subdirectory on server
+        server-dir: /public_html/staging/
+        # Simplified exclude list
+        exclude: |
+          .git/**
+          .github/**
+          README.md
+          SETUP.md
+          .gitignore
+        # Enable logging for debugging
+        log-level: verbose
+        # Dry run first (remove this after testing)
+        # dry-run: true
+        
+    - name: Verify deployment
+      run: |
+        echo "Deployment completed!"
+        echo "Check your staging site at: https://yourdomain.com/staging/"
