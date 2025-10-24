@@ -1,9 +1,7 @@
-name: Deploy to Staging (test.tabell.top)
+name: Deploy to Staging
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main, develop ]
   workflow_dispatch:
 
@@ -15,24 +13,13 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js (if needed for build)
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: Install dependencies (if package.json exists)
+    - name: List files for debugging
       run: |
-        if [ -f package.json ]; then
-          npm install
-        fi
+        echo "=== Files to deploy ==="
+        ls -la
+        find . -name "*.html" -o -name "*.css" -o -name "*.js"
         
-    - name: Build project (if build script exists)
-      run: |
-        if [ -f package.json ] && npm run build --if-present; then
-          echo "Build completed"
-        fi
-    
-    - name: Deploy to Staging Server via FTP
+    - name: Deploy via FTP
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.STAGING_FTP_SERVER }}
@@ -40,16 +27,9 @@ jobs:
         password: ${{ secrets.STAGING_FTP_PASSWORD }}
         local-dir: ./
         server-dir: /public_html/staging/
-       exclude: |
-  .git/**
-  .github/**
-  README.md
-  SETUP.md
-  .gitignore
-
-  - name: List files before deployment
-      run: |
-        echo "=== Files to deploy ==="
-        ls -la
-        find . -name "*.html" -o -name "*.css" -o -name "*.js"
-        
+        exclude: |
+          .git/**
+          .github/**
+          README.md
+          SETUP.md
+          .gitignore
