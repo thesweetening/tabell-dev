@@ -1,4 +1,4 @@
-/* Grundläggande reset och variabler - FORCE UPDATE v3.0 BLUE TEST */
+/* CSS DEPLOYMENT TEST v4.0 - STARK RÖD FÄRG */
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +6,7 @@
 }
 
 :root {
-    --primary-color: #0066ff;
+    --primary-color: #ff0000;
     --secondary-color: #64748b;
     --background-color: #f8fafc;
     --text-color: #1e293b;
