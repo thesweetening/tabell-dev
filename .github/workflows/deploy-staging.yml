@@ -26,7 +26,7 @@ jobs:
         username: ${{ secrets.STAGING_FTP_USERNAME }}
         password: ${{ secrets.STAGING_FTP_PASSWORD }}
         local-dir: ./
-        server-dir: /public_html/staging/
+        server-dir: ./
         exclude: |
           .git/**
           .github/**
