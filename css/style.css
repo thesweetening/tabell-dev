@@ -1,4 +1,4 @@
-/* FTP-FIX TEST v9.0 - VIT BAKGRUND SVART TEXT */
+/* STAGING FIX TEST v10.0 - GRÖN BAKGRUND VIT TEXT */
 * {
     margin: 0;
     padding: 0;
@@ -6,10 +6,10 @@
 }
 
 :root {
-    --primary-color: #000000;
-    --secondary-color: #000000;
-    --background-color: #ffffff;
-    --text-color: #000000;
+    --primary-color: #ffffff;
+    --secondary-color: #f0f0f0;
+    --background-color: #2d5a27;
+    --text-color: #ffffff;
     --white: #ffffff;
     --border-color: #e2e8f0;
 }
@@ -18,7 +18,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: #ffffff;
+    background-color: #2d5a27;
 }
 
 .container {
@@ -64,7 +64,7 @@ body {
 
 /* Hero-sektion */
 .hero {
-    background: #ffffff;
+    background: #2d5a27;
     color: var(--primary-color);
     padding: 4rem 0;
     text-align: center;
