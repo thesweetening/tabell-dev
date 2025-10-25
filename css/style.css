@@ -1,4 +1,4 @@
-/* FINAL TEST v6.0 - VIT BAKGRUND & RÖD TEXT */
+/* FTP-FIX TEST v7.0 - SVENSKA FLAGGANS FÄRGER */
 * {
     margin: 0;
     padding: 0;
@@ -6,10 +6,10 @@
 }
 
 :root {
-    --primary-color: #f70505;
+    --primary-color: #0509f7;
     --secondary-color: #64748b;
-    --background-color: #ffffff;
-    --text-color: #f70505;
+    --background-color: #f3f705;
+    --text-color: #0509f7;
     --white: #ffffff;
     --border-color: #e2e8f0;
 }
@@ -18,7 +18,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: #ffffff;
+    background-color: #f3f705;
 }
 
 .container {
@@ -64,7 +64,7 @@ body {
 
 /* Hero-sektion */
 .hero {
-    background: #ffffff;
+    background: #f3f705;
     color: var(--primary-color);
     padding: 4rem 0;
     text-align: center;
