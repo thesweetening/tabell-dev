@@ -27,6 +27,9 @@ jobs:
         password: ${{ secrets.STAGING_FTP_PASSWORD }}
         local-dir: ./
         server-dir: ./
+        log-level: verbose
+        security: loose
+        timeout: 60000
         exclude: |
           .git/**
           .github/**
