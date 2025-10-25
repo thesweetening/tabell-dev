@@ -1,4 +1,4 @@
-/* STAGING DEBUG TEST v11.0 - VERBOSE LOGGING + LOOSE SECURITY */
+/* JULHOCKEY TEST v12.0 - VIT BAKGRUND MED RÖD TEXT OCH SNÖGUBBE */
 * {
     margin: 0;
     padding: 0;
@@ -6,9 +6,9 @@
 }
 
 :root {
-    --primary-color: #ffffff;
-    --secondary-color: #f0f0f0;
-    --background-color: #2d5a27;
+    --primary-color: #dc143c;
+    --secondary-color: #ff6b6b;
+    --background-color: #ffffff;
     --text-color: #ffffff;
     --white: #ffffff;
     --border-color: #e2e8f0;
