@@ -32,5 +32,6 @@ jobs:
           .github/**
           README.md
           SETUP.md
+          COMPLETE-WORKFLOW-SUMMARY.md
           PROJECT-STATUS.md
           .gitignore
