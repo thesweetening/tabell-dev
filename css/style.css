@@ -1,4 +1,4 @@
-/* CSS DEPLOYMENT TEST v4.0 - STARK RÖD FÄRG */
+/* HOCKEY TEMA v5.0 - GUL BAKGRUND & SVART TEXT */
 * {
     margin: 0;
     padding: 0;
@@ -6,10 +6,10 @@
 }
 
 :root {
-    --primary-color: #ff0000;
+    --primary-color: #ebf527;
     --secondary-color: #64748b;
     --background-color: #f8fafc;
-    --text-color: #1e293b;
+    --text-color: #000000;
     --white: #ffffff;
     --border-color: #e2e8f0;
 }
