@@ -1,4 +1,4 @@
-/* Grundläggande reset och variabler - FORCE UPDATE v2.1 */
+/* Grundläggande reset och variabler - FORCE UPDATE v3.0 BLUE TEST */
 * {
     margin: 0;
     padding: 0;
@@ -6,7 +6,7 @@
 }
 
 :root {
-    --primary-color: #000000;
+    --primary-color: #0066ff;
     --secondary-color: #64748b;
     --background-color: #f8fafc;
     --text-color: #1e293b;
