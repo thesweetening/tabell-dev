@@ -1,4 +1,4 @@
-/* HOCKEY TEMA v5.0 - GUL BAKGRUND & SVART TEXT */
+/* FINAL TEST v6.0 - VIT BAKGRUND & RÖD TEXT */
 * {
     margin: 0;
     padding: 0;
@@ -6,10 +6,10 @@
 }
 
 :root {
-    --primary-color: #ebf527;
+    --primary-color: #f70505;
     --secondary-color: #64748b;
-    --background-color: #f8fafc;
-    --text-color: #000000;
+    --background-color: #ffffff;
+    --text-color: #f70505;
     --white: #ffffff;
     --border-color: #e2e8f0;
 }
@@ -18,7 +18,7 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: var(--background-color);
+    background-color: #ffffff;
 }
 
 .container {
@@ -64,8 +64,8 @@ body {
 
 /* Hero-sektion */
 .hero {
-    background: linear-gradient(135deg, var(--primary-color), #3b82f6);
-    color: var(--white);
+    background: #ffffff;
+    color: var(--primary-color);
     padding: 4rem 0;
     text-align: center;
 }
