@@ -12,13 +12,14 @@ let config = {
     teamStatsTable: 'Team_Stats'
 };
 
-// Lagnamn-mappning för att säkerställa korrekt koppling
+// Lagnamn-mappning för att hantera skillnader mellan CSV-filer och Airtable
 const teamNameMapping = {
+    // Matches.csv namn → Airtable Teams namn
     'Färjestad BK': 'Färjestad BK',
     'Frölunda HC': 'Frölunda HC', 
     'Växjö Lakers': 'Växjö Lakers',
-    'Luleå Hockey': 'Luleå Hockey',
-    'Djurgårdens IF': 'Djurgårdens IF',
+    'Luleå Hockey': 'Luleå HF',  // OBS: Olika namn i teams.csv
+    'Djurgårdens IF': 'Djurgården IF',
     'Skellefteå AIK': 'Skellefteå AIK',
     'HV71': 'HV71',
     'Rögle BK': 'Rögle BK',
@@ -26,22 +27,41 @@ const teamNameMapping = {
     'Linköping HC': 'Linköping HC',
     'Malmö Redhawks': 'Malmö Redhawks',
     'Brynäs IF': 'Brynäs IF',
-    'Timrå IK': 'Timrå IK',
-    'Örebro Hockey': 'Örebro Hockey'
+    'Timrå IK': 'Timrå IK', // Saknas i teams.csv - behöver läggas till manuellt
+    'Örebro Hockey': 'Örebro HK' // OBS: Olika namn i teams.csv
 };
 
 /**
- * Läser konfiguration från .env fil
+ * Läser konfiguration från localStorage eller .env fil
  */
 async function loadConfig() {
     try {
+        // Först: försök läsa från localStorage (admin-panelen)
+        const savedApiKey = localStorage.getItem('airtable_api_key');
+        const savedBaseId = localStorage.getItem('airtable_base_id');
+        
+        if (savedApiKey && savedBaseId) {
+            config.apiKey = savedApiKey;
+            config.baseId = savedBaseId;
+            console.log('Konfiguration laddad från localStorage');
+            return;
+        }
+        
+        // Annars: försök läsa från .env fil
         const response = await fetch('.env');
+        
+        if (!response.ok) {
+            throw new Error(`Kunde inte läsa .env fil: ${response.status}`);
+        }
+        
         const text = await response.text();
         
         text.split('\n').forEach(line => {
-            if (line.startsWith('#') || !line.includes('=')) return;
+            if (line.startsWith('#') || !line.includes('=') || line.trim() === '') return;
             
-            const [key, value] = line.split('=');
+            const [key, value] = line.split('=', 2); // Begränsa till 2 delar
+            if (!key || !value) return;
+            
             switch(key.trim()) {
                 case 'AIRTABLE_API_KEY':
                     config.apiKey = value.trim();
@@ -61,16 +81,24 @@ async function loadConfig() {
             }
         });
         
-        console.log('Konfiguration laddad:', {
-            baseId: config.baseId,
-            teamsTable: config.teamsTable,
-            matchesTable: config.matchesTable
-        });
+        console.log('Konfiguration laddad från .env fil');
         
     } catch (error) {
         console.error('Fel vid laddning av konfiguration:', error);
-        throw new Error('Kunde inte ladda .env konfiguration');
+        throw new Error(`Kunde inte ladda konfiguration: ${error.message}`);
     }
+    
+    // Validera att vi har nödvändiga värden
+    if (!config.apiKey || !config.baseId) {
+        throw new Error('API-nyckel eller Base-ID saknas. Kontrollera .env filen eller fyll i admin-panelen.');
+    }
+    
+    console.log('Konfiguration validerad:', {
+        hasApiKey: !!config.apiKey,
+        baseId: config.baseId,
+        teamsTable: config.teamsTable,
+        matchesTable: config.matchesTable
+    });
 }
 
 /**
@@ -169,12 +197,17 @@ async function loadMatchesFromCSV() {
  * Konverterar matchdata till Airtable-format
  */
 function convertMatchForAirtable(match, teams) {
-    const homeTeamId = teams[match.home_team];
-    const awayTeamId = teams[match.away_team];
+    // Använd mappning för att hitta rätt lagnamn i Airtable
+    const homeTeamAirtableName = teamNameMapping[match.home_team] || match.home_team;
+    const awayTeamAirtableName = teamNameMapping[match.away_team] || match.away_team;
+    
+    const homeTeamId = teams[homeTeamAirtableName];
+    const awayTeamId = teams[awayTeamAirtableName];
     
     if (!homeTeamId || !awayTeamId) {
         console.warn(`Varning: Kunde inte hitta lag för match ${match.match_id}:`, 
-                    `${match.home_team} (${homeTeamId}) vs ${match.away_team} (${awayTeamId})`);
+                    `${match.home_team} → ${homeTeamAirtableName} (${homeTeamId}) vs ${match.away_team} → ${awayTeamAirtableName} (${awayTeamId})`);
+        console.warn('Tillgängliga lag i Airtable:', Object.keys(teams));
         return null;
     }
     
@@ -344,17 +377,34 @@ async function testAirtableConnection() {
     try {
         await loadConfig();
         
+        console.log('📋 Konfiguration laddad:', {
+            hasApiKey: !!config.apiKey,
+            apiKeyStart: config.apiKey ? config.apiKey.substring(0, 10) + '...' : 'Saknas',
+            baseId: config.baseId,
+            teamsTable: config.teamsTable
+        });
+        
         // Testa att hämta första recordet från Teams
-        const response = await airtableRequest(`${config.teamsTable}?maxRecords=1`);
+        console.log(`🔍 Testar API-anrop till: https://api.airtable.com/v0/${config.baseId}/${config.teamsTable}`);
+        
+        const response = await airtableRequest(`${config.teamsTable}?maxRecords=3`);
         
         console.log('✓ Airtable-anslutning fungerar!');
         console.log('📊 Base ID:', config.baseId);
-        console.log('📋 Teams tabell:', response.records.length > 0 ? 'OK' : 'Tom');
+        console.log('📋 Teams tabell:', response.records.length > 0 ? `${response.records.length} lag hittade` : 'Tom');
+        
+        if (response.records.length > 0) {
+            console.log('🏒 Första lagen:', response.records.map(r => r.fields.team_name || r.fields.name).join(', '));
+        }
         
         return true;
         
     } catch (error) {
         console.error('❌ Airtable-anslutning misslyckades:', error);
+        console.error('📝 Detaljerat fel:', {
+            message: error.message,
+            stack: error.stack
+        });
         return false;
     }
 }
