@@ -332,6 +332,15 @@ class SHLSimulator {
                 ...record.fields
             }));
 
+            // Debug: Hitta och logga Frölundas specifika rådata
+            const frolandaRaw = response.data.find(record => {
+                return record.fields['name (from Teams)'] && record.fields['name (from Teams)'][0] === 'Frölunda HC';
+            });
+            if (frolandaRaw) {
+                console.log('🔍 Debug - Frölunda RAW data från Airtable:', frolandaRaw);
+                console.log('🔍 Debug - Frölunda fields:', frolandaRaw.fields);
+            }
+
             // Debug: Skriv ut mappade data för Frölunda
             const frolandaStats = this.teamStats.find(stat => {
                 const team = this.teams.find(t => t.id === stat.teamId);
