@@ -305,22 +305,37 @@ class SHLSimulator {
         try {
             const response = await this.apiRequest('team-stats');
             
+            // Debug: Skriv ut första posten för att se vad vi får från Airtable
+            if (response.data.length > 0) {
+                console.log('🔍 Debug - Första Team_Stats post från Airtable:', response.data[0]);
+                console.log('🔍 Debug - Fält i första posten:', response.data[0].fields);
+            }
+
             this.teamStats = response.data.map(record => ({
                 id: record.id,
                 teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
-                GP: record.fields.games,
-                W: record.fields.wins, // Behåller för backwards compatibility
-                wins: record.fields.wins, // Korrekt fält från Team_Stats
+                // Använd EXAKT den data som finns i Team_Stats-tabellen
+                games: record.fields.games,
+                wins: record.fields.wins,
                 overtime_wins: record.fields.overtime_wins,
-                L: record.fields.losses, // Behåller för backwards compatibility
-                losses: record.fields.losses, // Korrekt fält från Team_Stats
-                OTL: record.fields.overtime_losses, // Behåller för backwards compatibility
-                overtime_losses: record.fields.overtime_losses, // Korrekt fält från Team_Stats
-                P: record.fields.points,
-                GF: record.fields.goals_for,
-                GA: record.fields.goals_against,
+                losses: record.fields.losses,
+                overtime_losses: record.fields.overtime_losses,
+                goals_for: record.fields.goals_for,
+                goals_against: record.fields.goals_against,
+                goal_difference: record.fields.goal_difference, // Formula-fält
+                points: record.fields.points, // Formula-fält
+                season: record.fields.season,
                 ...record.fields
             }));
+
+            // Debug: Skriv ut mappade data för Frölunda
+            const frolandaStats = this.teamStats.find(stat => {
+                const team = this.teams.find(t => t.id === stat.teamId);
+                return team && team.name && team.name.includes('Frölunda');
+            });
+            if (frolandaStats) {
+                console.log('🔍 Debug - Frölunda mappade stats:', frolandaStats);
+            }
 
             // Backup original stats för reset-funktionalitet
             this.originalStats.clear();
@@ -370,14 +385,21 @@ class SHLSimulator {
         console.log('Teams:', this.teams.map(t => `${t.id}: ${t.Lag}`));
         console.log('Stats teamIds:', this.teamStats.map(s => s.teamId));
 
-        // Sortera lag efter poäng (P) och sedan efter målskillnad
+        // Sortera enligt SHL-regler: 1) Poäng 2) Målskillnad 3) Gjorda mål
         const sortedStats = [...this.teamStats].sort((a, b) => {
-            const pointsDiff = (b.P || 0) - (a.P || 0);
+            // 1. Sortera efter poäng (högst först)
+            const pointsDiff = (b.points || 0) - (a.points || 0);
             if (pointsDiff !== 0) return pointsDiff;
             
-            const aGoalDiff = (a.GF || 0) - (a.GA || 0);
-            const bGoalDiff = (b.GF || 0) - (b.GA || 0);
-            return bGoalDiff - aGoalDiff;
+            // 2. Om lika poäng, sortera efter målskillnad (bäst först)
+            const aGoalDiff = a.goal_difference !== undefined ? a.goal_difference : ((a.goals_for || 0) - (a.goals_against || 0));
+            const bGoalDiff = b.goal_difference !== undefined ? b.goal_difference : ((b.goals_for || 0) - (b.goals_against || 0));
+            if (bGoalDiff !== aGoalDiff) {
+                return bGoalDiff - aGoalDiff; // Bättre målskillnad först
+            }
+            
+            // 3. Om även målskillnad är lika, sortera efter gjorda mål (flest först)
+            return (b.goals_for || 0) - (a.goals_for || 0); // Fler gjorda mål först
         });
 
         const tableHTML = `
@@ -401,21 +423,24 @@ class SHLSimulator {
                     ${sortedStats.map((stat, index) => {
                         const team = this.teams.find(t => t.id === stat.teamId);
                         const teamName = team ? team.name : `Okänt lag (${stat.teamId})`;
-                        const goalDiff = (stat.GF || 0) - (stat.GA || 0);
+                        // Använd formula-fält från Airtable om tillgängligt, annars beräkna
+                        const goalDiff = stat.goal_difference !== undefined 
+                            ? stat.goal_difference 
+                            : (stat.goals_for || 0) - (stat.goals_against || 0);
                         
                         return `
                             <tr style="color: #333 !important; border-bottom: 1px solid #e5e7eb;">
                                 <td style="text-align: center; font-weight: bold; color: #333 !important;">${index + 1}</td>
                                 <td class="team-name" style="font-weight: bold; color: #dc2626 !important;">${teamName}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.GP || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.games || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.wins || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.overtime_wins || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.losses || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.overtime_losses || 0}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.GF || 0}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.GA || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.goals_for || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.goals_against || 0}</td>
                                 <td style="text-align: center; color: ${goalDiff > 0 ? '#2e7d32' : goalDiff < 0 ? '#d32f2f' : '#333'} !important; font-weight: bold;">${goalDiff > 0 ? '+' : ''}${goalDiff}</td>
-                                <td style="text-align: center; font-weight: bold; background: #fef2f2; color: #dc2626 !important; border-left: 2px solid #dc2626;">${stat.P || 0}</td>
+                                <td style="text-align: center; font-weight: bold; background: #fef2f2; color: #dc2626 !important; border-left: 2px solid #dc2626;">${stat.points || 0}</td>
                             </tr>
                         `;
                     }).join('')}
@@ -723,11 +748,15 @@ class SHLSimulator {
         homeStats.GP = (homeStats.GP || 0) + 1;
         awayStats.GP = (awayStats.GP || 0) + 1;
         
-        // Uppdatera mål
-        homeStats.GF = (homeStats.GF || 0) + homeScore;
-        homeStats.GA = (homeStats.GA || 0) + awayScore;
-        awayStats.GF = (awayStats.GF || 0) + awayScore;
-        awayStats.GA = (awayStats.GA || 0) + homeScore;
+        // Uppdatera mål - både nya och gamla fält
+        homeStats.goals_for = (homeStats.goals_for || 0) + homeScore;
+        homeStats.GF = (homeStats.GF || 0) + homeScore; // Behåll för compatibility
+        homeStats.goals_against = (homeStats.goals_against || 0) + awayScore;
+        homeStats.GA = (homeStats.GA || 0) + awayScore; // Behåll för compatibility
+        awayStats.goals_for = (awayStats.goals_for || 0) + awayScore;
+        awayStats.GF = (awayStats.GF || 0) + awayScore; // Behåll för compatibility
+        awayStats.goals_against = (awayStats.goals_against || 0) + homeScore;
+        awayStats.GA = (awayStats.GA || 0) + homeScore; // Behåll för compatibility
         
         // Bestäm vinnare och uppdatera vinster/förluster
         let homeWin = false;
@@ -755,16 +784,20 @@ class SHLSimulator {
         if (resultType === 'overtime' || resultType === 'shootout') {
             // Förlängning eller straffläggning - förloraren får 1 poäng
             if (homeWin) {
-                homeStats.P = (homeStats.P || 0) + 2; // Vinst i förlängning/straffar = 2p
-                awayStats.P = (awayStats.P || 0) + 1; // Förlust i förlängning/straffar = 1p
+                homeStats.points = (homeStats.points || 0) + 2; // Korrekt fält
+                homeStats.P = (homeStats.P || 0) + 2; // Behåll för compatibility
+                awayStats.points = (awayStats.points || 0) + 1; // Korrekt fält
+                awayStats.P = (awayStats.P || 0) + 1; // Behåll för compatibility
                 awayStats.overtime_losses = (awayStats.overtime_losses || 0) + 1; // Korrekt fält
                 awayStats.OTL = (awayStats.OTL || 0) + 1; // Behåll för compatibility
                 if (resultType === 'overtime') {
                     homeStats.overtime_wins = (homeStats.overtime_wins || 0) + 1;
                 }
             } else {
-                awayStats.P = (awayStats.P || 0) + 2;
-                homeStats.P = (homeStats.P || 0) + 1;
+                awayStats.points = (awayStats.points || 0) + 2; // Korrekt fält
+                awayStats.P = (awayStats.P || 0) + 2; // Behåll för compatibility
+                homeStats.points = (homeStats.points || 0) + 1; // Korrekt fält
+                homeStats.P = (homeStats.P || 0) + 1; // Behåll för compatibility
                 homeStats.overtime_losses = (homeStats.overtime_losses || 0) + 1; // Korrekt fält
                 homeStats.OTL = (homeStats.OTL || 0) + 1; // Behåll för compatibility
                 if (resultType === 'overtime') {
@@ -772,12 +805,15 @@ class SHLSimulator {
                 }
             }
         } else {
-            // Ordinarie tid - bara vinnaren får poäng
+            // Ordinarie tid - SHL-regler: 3 poäng för vinst, 0 för förlust
             if (homeWin) {
-                homeStats.P = (homeStats.P || 0) + 2;
+                homeStats.points = (homeStats.points || 0) + 3; // Vinst i ordinarie tid = 3p (SHL-regler)
+                homeStats.P = (homeStats.P || 0) + 3; // Behåll för compatibility
             } else if (awayWin) {
-                awayStats.P = (awayStats.P || 0) + 2;
+                awayStats.points = (awayStats.points || 0) + 3; // Vinst i ordinarie tid = 3p (SHL-regler)
+                awayStats.P = (awayStats.P || 0) + 3; // Behåll för compatibility
             }
+            // Förloraren får 0 poäng i ordinarie tid
         }
         
         console.log('Updated stats for:', homeTeam, homeStats);
