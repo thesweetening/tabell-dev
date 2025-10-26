@@ -36,28 +36,13 @@
                 <div class="table-section">
                     <h2>📊 SHL Tabell 2024/25</h2>
                     <div class="table-controls">
-                        <button id="resetTable" class="btn btn-secondary">🔄 Återställ tabell</button>
+                        <button id="reset-btn" class="btn btn-secondary">🔄 Återställ tabell</button>
                         <button id="saveSimulation" class="btn btn-primary">💾 Spara simulering</button>
                     </div>
                     <div class="table-container">
-                        <table id="shlTable" class="shl-table">
-                            <thead>
-                                <tr>
-                                    <th>Pos</th>
-                                    <th>Lag</th>
-                                    <th>M</th>
-                                    <th>V</th>
-                                    <th>VÖ</th>
-                                    <th>FÖ</th>
-                                    <th>F</th>
-                                    <th>+/-</th>
-                                    <th>P</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tableBody">
-                                <!-- Data laddas här av JavaScript -->
-                            </tbody>
-                        </table>
+                        <div id="standings-table">
+                            <!-- Tabell genereras av JavaScript -->
+                        </div>
                     </div>
                 </div>
 
@@ -69,7 +54,7 @@
                         <input type="date" id="dateFilter" class="date-filter">
                         <button id="clearResults" class="btn btn-secondary">❌ Rensa resultat</button>
                     </div>
-                    <div id="matchesList" class="matches-list">
+                    <div id="matches-container" class="matches-list">
                         <!-- Matcher laddas här av JavaScript -->
                     </div>
                 </div>
