@@ -165,6 +165,7 @@
             <p>Importera SHL-matcher från CSV-fil till Airtable:</p>
             
             <button class="button" onclick="startImport()" id="importBtn">Importera Matcher</button>
+            <button class="button" onclick="updateTimes()" style="background: #8b5cf6;">🕐 Fixa Matchtider</button>
             <button class="button" onclick="runDebug()" style="background: #f59e0b;">🔍 Debug Import</button>
             <button class="button" onclick="testSingle()" style="background: #10b981;">🧪 Hitta Rätta Fältnamn</button>
             <button class="button danger" onclick="clearLog()">Rensa Log</button>
@@ -179,6 +180,7 @@
 
     <script src="airtable-importer.js"></script>
     <script src="debug-import.js"></script>
+    <script src="time-updater.js"></script>
     <script>
         let isImporting = false;
         
@@ -426,6 +428,40 @@
             } catch (error) {
                 showStatus('Test misslyckades', 'error');
                 log(`Test fel: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
+            }
+        }
+        
+        async function updateTimes() {
+            log('🕐 Startar uppdatering av matchtider...', 'info');
+            
+            try {
+                // Omdirigera console för bättre logging
+                const originalLog = console.log;
+                const originalError = console.error;
+                
+                console.log = (...args) => {
+                    log(args.join(' '), 'info');
+                    originalLog.apply(console, args);
+                };
+                
+                console.error = (...args) => {
+                    log(args.join(' '), 'error');
+                    originalError.apply(console, args);
+                };
+                
+                const result = await window.updateMatchTimes();
+                
+                // Återställ console
+                console.log = originalLog;
+                console.error = originalError;
+                
+                showStatus(`✅ Uppdaterade ${result.updated} matcher på ${result.duration}s`, 'success');
+                log(`✅ Tidsuppdatering klar: ${result.updated} matcher`, 'success');
+                
+            } catch (error) {
+                showStatus('Tidsuppdatering misslyckades', 'error');
+                log(`Tidsuppdatering fel: ${error.message}`, 'error');
                 log(`Stack trace: ${error.stack}`, 'error');
             }
         }
