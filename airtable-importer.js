@@ -139,14 +139,27 @@ async function fetchTeams() {
     console.log('Hämtar lag från Airtable...');
     
     try {
+        // Säkerställ att config är laddad
+        if (!config.apiKey || !config.baseId) {
+            await loadConfig();
+        }
+        
         const response = await airtableRequest(config.teamsTable);
         const teams = {};
+        
+        if (!response.records || response.records.length === 0) {
+            console.warn('⚠️ Inga records hittades i Teams-tabellen');
+            console.log('Response:', response);
+            return teams;
+        }
         
         response.records.forEach(record => {
             const teamName = record.fields.team_name || record.fields.name;
             if (teamName) {
                 teams[teamName] = record.id;
                 console.log(`✓ Lag hittad: ${teamName}`);
+            } else {
+                console.warn('⚠️ Record utan teamnamn:', record.fields);
             }
         });
         
@@ -418,13 +431,21 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         importSHLMatches,
         testAirtableConnection,
-        loadConfig
+        loadConfig,
+        fetchTeams,
+        loadMatchesFromCSV,
+        airtableRequest,
+        config
     };
 } else {
     // Browser environment - gör funktioner globalt tillgängliga
     window.SHLImporter = {
         importSHLMatches,
         testAirtableConnection,
-        loadConfig
+        loadConfig,
+        fetchTeams,
+        loadMatchesFromCSV,
+        airtableRequest,
+        config
     };
 }

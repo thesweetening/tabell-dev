@@ -10,10 +10,12 @@ async function debugImportIssues() {
         console.log('✅ Konfiguration laddad');
         
         // 2. Hämta lag från Airtable
+        console.log('🏒 Hämtar lag från Airtable...');
         const teams = await window.SHLImporter.fetchTeams();
         console.log('📊 Teams från Airtable:', Object.keys(teams));
         
         // 3. Ladda några matcher från CSV
+        console.log('📋 Läser matchdata från CSV...');
         const matches = await window.SHLImporter.loadMatchesFromCSV();
         const firstMatch = matches[0];
         console.log('📋 Första matchen från CSV:', firstMatch);
