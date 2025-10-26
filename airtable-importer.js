@@ -154,7 +154,7 @@ async function fetchTeams() {
         }
         
         response.records.forEach(record => {
-            const teamName = record.fields.team_name || record.fields.name;
+            const teamName = record.fields.name; // Fältet heter "name" i Airtable
             if (teamName) {
                 teams[teamName] = record.id;
                 console.log(`✓ Lag hittad: ${teamName}`);
@@ -227,14 +227,13 @@ function convertMatchForAirtable(match, teams) {
     const airtableMatch = {
         fields: {
             // match_id removed - det är ett computed field i Airtable
-            date: match.date,
-            time: match.time,
-            home_team: [homeTeamId], // Array för länkade records
-            away_team: [awayTeamId], // Array för länkade records
+            match_date: match.date,      // Fältet heter "match_date" i Airtable
+            match_time: match.time,      // Fältet heter "match_time" i Airtable
+            home_team: [homeTeamId],     // Array för länkade records
+            away_team: [awayTeamId],     // Array för länkade records
             arena: match.arena,
-            status: match.status || 'Scheduled',
-            round: parseInt(match.round) || 1,
             season: match.season || '2024-2025'
+            // Tog bort status och round - finns inte i Airtable-strukturen
         }
     };
     
