@@ -6,19 +6,21 @@
 }
 
 :root {
-    --primary-color: #dc143c;
-    --secondary-color: #ff6b6b;
+    --primary-color: #2196F3;     /* Ljusblå som primärfärg */
+    --secondary-color: #1976D2;   /* Mörkare blå för kontrast */
     --background-color: #ffffff;
     --text-color: #ffffff;
     --white: #ffffff;
     --border-color: #e2e8f0;
+    --accent-color: #03DAC6;      /* Cyan som accentfärg */
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     line-height: 1.6;
     color: var(--text-color);
-    background-color: #2d5a27;
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 50%, #90CAF9 100%);
+    min-height: 100vh;
 }
 
 .container {

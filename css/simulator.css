@@ -53,8 +53,8 @@
 }
 
 .table-container {
-    overflow-x: auto;
     flex: 1;
+    overflow: hidden; /* Ingen scrollbar */
 }
 
 .shl-table {
