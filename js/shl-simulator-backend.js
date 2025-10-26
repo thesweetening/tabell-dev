@@ -276,6 +276,8 @@ class SHLSimulator {
             
             this.teams = response.data.map(record => ({
                 id: record.id,
+                name: record.fields.name,
+                short_name: record.fields.short_name,
                 ...record.fields
             }));
 
@@ -294,7 +296,14 @@ class SHLSimulator {
             
             this.teamStats = response.data.map(record => ({
                 id: record.id,
-                teamId: Array.isArray(record.fields.Lag) ? record.fields.Lag[0] : record.fields.Lag,
+                teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
+                GP: record.fields.games,
+                W: record.fields.wins,
+                L: record.fields.losses,
+                OTL: record.fields.overtime_losses,
+                P: record.fields.points,
+                GF: record.fields.goals_for,
+                GA: record.fields.goals_against,
                 ...record.fields
             }));
 
@@ -319,11 +328,12 @@ class SHLSimulator {
             
             this.matches = response.data.map(record => ({
                 id: record.id,
-                homeTeamId: Array.isArray(record.fields.Hemmalag) ? record.fields.Hemmalag[0] : record.fields.Hemmalag,
-                awayTeamId: Array.isArray(record.fields.Bortalag) ? record.fields.Bortalag[0] : record.fields.Bortalag,
-                homeScore: record.fields.Hemmaresultat || null,
-                awayScore: record.fields.Bortaresultat || null,
-                date: record.fields.Datum,
+                homeTeamId: Array.isArray(record.fields.home_team) ? record.fields.home_team[0] : record.fields.home_team,
+                awayTeamId: Array.isArray(record.fields.away_team) ? record.fields.away_team[0] : record.fields.away_team,
+                homeScore: record.fields.home_goals || null,
+                awayScore: record.fields.away_goals || null,
+                date: record.fields.match_date,
+                finished: record.fields.finished,
                 ...record.fields
             }));
 
@@ -374,7 +384,7 @@ class SHLSimulator {
                 <tbody>
                     ${sortedStats.map((stat, index) => {
                         const team = this.teams.find(t => t.id === stat.teamId);
-                        const teamName = team ? team.Lag : `Okänt lag (${stat.teamId})`;
+                        const teamName = team ? team.name : `Okänt lag (${stat.teamId})`;
                         const goalDiff = (stat.GF || 0) - (stat.GA || 0);
                         const goalDiffClass = goalDiff > 0 ? 'positive' : goalDiff < 0 ? 'negative' : '';
                         
@@ -411,9 +421,9 @@ class SHLSimulator {
         
         console.log('🏒 Renderar matcher:', this.matches.length, 'totalt');
 
-        // Filtrera matcher utan resultat (framtida matcher)
+        // Filtrera matcher som inte är färdiga
         const upcomingMatches = this.matches.filter(match => 
-            match.homeScore === null || match.awayScore === null
+            !match.finished && (match.homeScore === null || match.awayScore === null)
         );
 
         if (upcomingMatches.length === 0) {
@@ -425,8 +435,8 @@ class SHLSimulator {
             const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
             const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
             
-            const homeTeamName = homeTeam ? homeTeam.Lag : 'Okänt lag';
-            const awayTeamName = awayTeam ? awayTeam.Lag : 'Okänt lag';
+            const homeTeamName = homeTeam ? homeTeam.name : 'Okänt lag';
+            const awayTeamName = awayTeam ? awayTeam.name : 'Okänt lag';
             
             const simResult = this.simulatedResults.get(match.id);
             
