@@ -258,20 +258,49 @@
             importBtn.textContent = 'Importerar...';
             
             try {
-                log('Startar matchimport...', 'info');
-                updateProgress(10, 'Förbereder import...');
+                log('🚀 Startar matchimport...', 'info');
+                updateProgress(5, 'Förbereder import...');
                 
-                // Sätt upp progress tracking
+                // Sätt upp progress tracking med bättre feedback
                 const originalLog = console.log;
+                let currentProgress = 5;
+                
                 console.log = function(...args) {
                     const message = args.join(' ');
                     log(message);
                     
-                    // Enkel progress baserat på meddelanden
-                    if (message.includes('Hämtar lag')) updateProgress(20);
-                    if (message.includes('Läser matchdata')) updateProgress(40);
-                    if (message.includes('Kontrollerar befintliga')) updateProgress(60);
-                    if (message.includes('Importerar batch')) updateProgress(80);
+                    // Bättre progress baserat på meddelanden
+                    if (message.includes('Konfiguration laddad')) {
+                        currentProgress = 15;
+                        updateProgress(currentProgress, 'Konfiguration OK ✅');
+                    } else if (message.includes('Hämtar lag')) {
+                        currentProgress = 25;
+                        updateProgress(currentProgress, 'Hämtar lag från Airtable...');
+                    } else if (message.includes('lag hämtade')) {
+                        currentProgress = 35;
+                        updateProgress(currentProgress, 'Lag hämtade ✅');
+                    } else if (message.includes('Läser matchdata')) {
+                        currentProgress = 45;
+                        updateProgress(currentProgress, 'Läser matchdata från CSV...');
+                    } else if (message.includes('matcher laddade')) {
+                        currentProgress = 55;
+                        updateProgress(currentProgress, 'Matchdata laddad ✅');
+                    } else if (message.includes('Kontrollerar befintliga')) {
+                        currentProgress = 65;
+                        updateProgress(currentProgress, 'Kontrollerar befintliga matcher...');
+                    } else if (message.includes('nya att importera')) {
+                        currentProgress = 70;
+                        updateProgress(currentProgress, 'Förbereder batch-import...');
+                    } else if (message.includes('Importerar batch')) {
+                        const batchMatch = message.match(/batch (\d+)/);
+                        if (batchMatch) {
+                            const batchNum = parseInt(batchMatch[1]);
+                            currentProgress = 70 + (batchNum * 2); // 2% per batch
+                            updateProgress(Math.min(currentProgress, 95), `Importerar batch ${batchNum}...`);
+                        }
+                    } else if (message.includes('Batch importerad')) {
+                        updateProgress(currentProgress, `✅ ${message}`);
+                    }
                     
                     originalLog.apply(console, args);
                 };

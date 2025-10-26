@@ -146,11 +146,11 @@ async function fetchTeams() {
             const teamName = record.fields.team_name || record.fields.name;
             if (teamName) {
                 teams[teamName] = record.id;
-                console.log(`Lag hittad: ${teamName} (ID: ${record.id})`);
+                console.log(`✓ Lag hittad: ${teamName}`);
             }
         });
         
-        console.log(`Totalt ${Object.keys(teams).length} lag hämtade från Airtable`);
+        console.log(`🏒 Totalt ${Object.keys(teams).length} lag hämtade från Airtable`);
         return teams;
         
     } catch (error) {
@@ -184,7 +184,7 @@ async function loadMatchesFromCSV() {
             matches.push(match);
         }
         
-        console.log(`${matches.length} matcher laddade från CSV`);
+        console.log(`📋 ${matches.length} matcher laddade från CSV`);
         return matches;
         
     } catch (error) {
@@ -265,17 +265,20 @@ async function importMatches(matches, teams) {
         }
         
         try {
-            console.log(`Importerar batch ${Math.floor(i/batchSize) + 1}, ${airtableRecords.length} matcher...`);
+            const batchNum = Math.floor(i/batchSize) + 1;
+            const totalBatches = Math.ceil(matches.length / batchSize);
+            
+            console.log(`Importerar batch ${batchNum}/${totalBatches}, ${airtableRecords.length} matcher...`);
             
             const response = await airtableRequest(config.matchesTable, 'POST', {
                 records: airtableRecords
             });
             
             imported += response.records.length;
-            console.log(`✓ Batch importerad: ${response.records.length} matcher`);
+            console.log(`✓ Batch importerad: ${response.records.length} matcher (${imported}/${matches.length - errors} totalt)`);
             
             // Vänta lite mellan batches för att inte överbelasta API:et
-            await new Promise(resolve => setTimeout(resolve, 200));
+            await new Promise(resolve => setTimeout(resolve, 300));
             
         } catch (error) {
             console.error(`Fel vid import av batch ${Math.floor(i/batchSize) + 1}:`, error);
