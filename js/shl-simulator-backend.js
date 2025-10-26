@@ -433,10 +433,14 @@ class SHLSimulator {
         
         console.log('🏒 Renderar matcher:', this.matches.length, 'totalt');
 
-        // Filtrera matcher som inte är färdiga
-        const upcomingMatches = this.matches.filter(match => 
-            !match.finished && (match.homeScore === null || match.awayScore === null)
-        );
+        // Filtrera matcher som inte är färdiga och sortera efter datum
+        const upcomingMatches = this.matches
+            .filter(match => !match.finished && (match.homeScore === null || match.awayScore === null))
+            .sort((a, b) => {
+                const dateA = new Date(a.match_date || a.date || '');
+                const dateB = new Date(b.match_date || b.date || '');
+                return dateA - dateB; // Sortera från tidigast till senast
+            });
 
         if (upcomingMatches.length === 0) {
             matchesContainer.innerHTML = '<p class="no-matches">Inga kommande matcher att simulera.</p>';
@@ -447,90 +451,83 @@ class SHLSimulator {
         const matchControlsHTML = `
             <div class="match-controls" style="margin-bottom: 15px; padding: 10px; background: #f8f9fa; border-radius: 8px; color: #333;">
                 <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">
-                    Antal matcher att visa:
-                    <select id="matches-limit" style="margin-left: 8px; padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; color: #333;">
-                        <option value="5">5 matcher</option>
-                        <option value="10" selected>10 matcher</option>
-                        <option value="15">15 matcher</option>
-                        <option value="20">20 matcher</option>
-                        <option value="all">Alla matcher</option>
+                    Antal omgångar att visa:
+                    <select id="rounds-limit" style="margin-left: 10px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; color: #333;">
+                        <option value="1" selected>1 omgång</option>
+                        <option value="3">3 omgångar</option>
+                        <option value="5">5 omgångar</option>
+                        <option value="all">Alla omgångar</option>
                     </select>
                 </label>
-                <p style="margin: 5px 0; font-size: 14px; color: #666;">
-                    Välj resultat-typ (Ordinarie tid/Övertid/Straffläggning) och klicka "Tillämpa" för att uppdatera tabellen.
+                <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
+                    En omgång = alla matcher som spelas samma datum. Välj resultat-typ och klicka "Tillämpa" för att uppdatera tabellen.
                 </p>
             </div>
         `;
 
-        // Hämta valt antal matcher att visa
-        const matchesLimitSelect = document.getElementById('matches-limit');
-        const limitValue = matchesLimitSelect ? matchesLimitSelect.value : '10';
-        const matchesToShow = limitValue === 'all' ? upcomingMatches : upcomingMatches.slice(0, parseInt(limitValue) || 10);
+        // Gruppera matcher efter datum (omgångar)
+        const matchesByRound = new Map();
+        upcomingMatches.forEach(match => {
+            const matchDate = match.match_date || match.date || 'Inget datum';
+            if (!matchesByRound.has(matchDate)) {
+                matchesByRound.set(matchDate, []);
+            }
+            matchesByRound.get(matchDate).push(match);
+        });
 
-        const matchesHTML = matchesToShow.map(match => {
-            const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
-            const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+        // Hämta valt antal omgångar att visa
+        const roundsLimitSelect = document.getElementById('rounds-limit');
+        const roundsLimit = roundsLimitSelect ? roundsLimitSelect.value : '1';
+        
+        // Konvertera till array av omgångar och begränsa
+        const roundsArray = Array.from(matchesByRound.entries());
+        const roundsToShow = roundsLimit === 'all' ? roundsArray : roundsArray.slice(0, parseInt(roundsLimit) || 1);
+        
+        // Generera HTML för matcher med omgång-headers
+        const matchesHTML = roundsToShow.map(([date, matches]) => {
+            const roundHeader = '<div class="round-header" style="background: #d32f2f; color: white; padding: 8px 12px; margin: 15px 0 10px 0; border-radius: 6px; font-weight: bold; text-align: center;">📅 Omgång ' + this.formatDate(date) + ' (' + matches.length + ' matcher)</div>';
             
-            const homeTeamName = homeTeam ? homeTeam.name : 'Okänt lag';
-            const awayTeamName = awayTeam ? awayTeam.name : 'Okänt lag';
+            const matchCards = matches.map(match => {
+                const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
+                const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
+                const homeTeamName = homeTeam ? homeTeam.name : 'Okänt lag';
+                const awayTeamName = awayTeam ? awayTeam.name : 'Okänt lag';
+                const simResult = this.simulatedResults.get(match.id);
+                
+                return '<div class="match-item" data-match-id="' + match.id + '" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #333;">' +
+                    '<div class="match-teams" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">' +
+                        '<div class="team home-team" style="display: flex; align-items: center; flex: 1;">' +
+                            '<span class="team-name" style="font-weight: bold; color: #333; margin-right: 8px; min-width: 80px; text-align: right;">' + homeTeamName + '</span>' +
+                            '<input type="number" class="score-input home-score" min="0" max="20" placeholder="0" value="' + (simResult ? simResult.homeScore : '') + '" data-match-id="' + match.id + '" data-team-type="home" data-team="' + homeTeamName + '" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333;">' +
+                        '</div>' +
+                        '<div class="vs" style="margin: 0 10px; font-weight: bold; color: #666;">-</div>' +
+                        '<div class="team away-team" style="display: flex; align-items: center; flex: 1;">' +
+                            '<input type="number" class="score-input away-score" min="0" max="20" placeholder="0" value="' + (simResult ? simResult.awayScore : '') + '" data-match-id="' + match.id + '" data-team-type="away" data-team="' + awayTeamName + '" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">' +
+                            '<span class="team-name" style="font-weight: bold; color: #333; min-width: 80px; text-align: left;">' + awayTeamName + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="match-options" style="text-align: center;">' +
+                        '<select class="result-type" data-match-id="' + match.id + '" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">' +
+                            '<option value="regular">Ordinarie tid</option>' +
+                            '<option value="overtime">Övertid</option>' +
+                            '<option value="shootout">Straffläggning</option>' +
+                        '</select>' +
+                        '<button class="apply-result" data-match-id="' + match.id + '" style="padding: 6px 12px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Tillämpa</button>' +
+                    '</div>' +
+                '</div>';
+            }).join('');
             
-            const simResult = this.simulatedResults.get(match.id);
-            
-            return `
-                <div class="match-item" data-match-id="${match.id}" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #333;">
-                    <div class="match-date" style="font-size: 12px; color: #666; text-align: center; margin-bottom: 8px;">${this.formatDate(match.date)}</div>
-                    <div class="match-teams" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-                        <div class="team home-team" style="display: flex; align-items: center; flex: 1;">
-                            <span class="team-name" style="font-weight: bold; color: #333; margin-right: 8px; min-width: 80px; text-align: right;">${homeTeamName}</span>
-                            <input type="number" 
-                                   class="score-input home-score" 
-                                   min="0" 
-                                   max="20" 
-                                   placeholder="0"
-                                   value="${simResult ? simResult.homeScore : ''}"
-                                   data-match-id="${match.id}"
-                                   data-team-type="home"
-                                   data-team="${homeTeamName}"
-                                   style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333;">
-                        </div>
-                        <div class="vs" style="margin: 0 10px; font-weight: bold; color: #666;">-</div>
-                        <div class="team away-team" style="display: flex; align-items: center; flex: 1;">
-                            <input type="number" 
-                                   class="score-input away-score" 
-                                   min="0" 
-                                   max="20" 
-                                   placeholder="0"
-                                   value="${simResult ? simResult.awayScore : ''}"
-                                   data-match-id="${match.id}"
-                                   data-team-type="away"
-                                   data-team="${awayTeamName}"
-                                   style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">
-                            <span class="team-name" style="font-weight: bold; color: #333; min-width: 80px; text-align: left;">${awayTeamName}</span>
-                        </div>
-                    </div>
-                    <div class="match-options" style="text-align: center;">
-                        <select class="result-type" data-match-id="${match.id}" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">
-                            <option value="regular">Ordinarie tid</option>
-                            <option value="overtime">Övertid</option>
-                            <option value="shootout">Straffläggning</option>
-                        </select>
-                        <button class="apply-result" data-match-id="${match.id}" 
-                                style="padding: 6px 12px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">
-                            Tillämpa
-                        </button>
-                    </div>
-                </div>
-            `;
+            return roundHeader + matchCards;
         }).join('');
 
         const finalHTML = matchControlsHTML + matchesHTML;
         console.log('📄 Sätter HTML för matcher, längd:', finalHTML.length);
         matchesContainer.innerHTML = finalHTML;
         
-        // Lägg till event listener för matches-limit dropdown
-        const limitSelectElement = document.getElementById('matches-limit');
-        if (limitSelectElement) {
-            limitSelectElement.addEventListener('change', () => {
+        // Lägg till event listener för rounds-limit dropdown
+        const roundsSelectElement = document.getElementById('rounds-limit');
+        if (roundsSelectElement) {
+            roundsSelectElement.addEventListener('change', () => {
                 this.renderMatches();
             });
         }
@@ -649,7 +646,7 @@ class SHLSimulator {
     applyMatchResult(matchId) {
         console.log('Applying match result for match:', matchId);
         
-        const matchContainer = document.querySelector(`[data-match-id="${matchId}"]`).closest('.match-item');
+        const matchContainer = document.querySelector('[data-match-id="' + matchId + '"]').closest('.match-item');
         if (!matchContainer) {
             console.error('Match container not found');
             return;
@@ -677,7 +674,7 @@ class SHLSimulator {
         const homeTeam = homeInput.dataset.team;
         const awayTeam = awayInput.dataset.team;
         
-        console.log(`Applying result: ${homeTeam} ${homeScore} - ${awayScore} ${awayTeam} (${resultType})`);
+        console.log('Applying result: ' + homeTeam + ' ' + homeScore + ' - ' + awayScore + ' ' + awayTeam + ' (' + resultType + ')');
         
         // Uppdatera statistik baserat på resultat
         this.updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
@@ -804,11 +801,7 @@ class SHLSimulator {
     showError(message) {
         const errorContainer = document.getElementById('error-container');
         if (errorContainer) {
-            errorContainer.innerHTML = `
-                <div class="error-message">
-                    ❌ <strong>Fel:</strong> ${message}
-                </div>
-            `;
+            errorContainer.innerHTML = '<div class="error-message">❌ <strong>Fel:</strong> ' + message + '</div>';
             errorContainer.style.display = 'block';
         } else {
             alert('Fel: ' + message);
