@@ -350,7 +350,7 @@ class SHLSimulator {
         });
 
         const tableHTML = `
-            <table class="standings">
+            <table class="shl-table">
                 <thead>
                     <tr>
                         <th>Pos</th>
