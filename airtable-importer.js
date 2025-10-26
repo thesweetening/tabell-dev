@@ -14,12 +14,12 @@ let config = {
 
 // Lagnamn-mappning för att hantera skillnader mellan CSV-filer och Airtable
 const teamNameMapping = {
-    // Matches.csv namn → Airtable Teams namn
+    // Matches.csv namn → Exakta Airtable Teams namn
     'Färjestad BK': 'Färjestad BK',
     'Frölunda HC': 'Frölunda HC', 
     'Växjö Lakers': 'Växjö Lakers',
-    'Luleå Hockey': 'Luleå HF',  // OBS: Olika namn i teams.csv
-    'Djurgårdens IF': 'Djurgården IF',
+    'Luleå Hockey': 'Luleå HF',        // ✓ Fixad mappning
+    'Djurgårdens IF': 'Djurgården IF', // ✓ Fixad mappning
     'Skellefteå AIK': 'Skellefteå AIK',
     'HV71': 'HV71',
     'Rögle BK': 'Rögle BK',
@@ -27,8 +27,8 @@ const teamNameMapping = {
     'Linköping HC': 'Linköping HC',
     'Malmö Redhawks': 'Malmö Redhawks',
     'Brynäs IF': 'Brynäs IF',
-    'Timrå IK': 'Timrå IK', // Saknas i teams.csv - behöver läggas till manuellt
-    'Örebro Hockey': 'Örebro HK' // OBS: Olika namn i teams.csv
+    'Timrå IK': 'Timrå',              // ✓ Fixad mappning
+    'Örebro Hockey': 'Örebro HK'      // ✓ Fixad mappning
 };
 
 /**
