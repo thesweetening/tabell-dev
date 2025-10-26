@@ -1,0 +1,5 @@
+session_id,match_home_team,match_away_team,simulated_home_goals,simulated_away_goals,simulated_overtime,simulated_shootout,simulation_name
+"session_123","Färjestad BK","Skellefteå AIK",2,3,FALSE,FALSE,"Min simulering"
+"session_123","Frölunda HC","Växjö Lakers",4,1,FALSE,FALSE,"Min simulering"
+"session_456","Luleå HF","Djurgården IF",2,2,TRUE,FALSE,"Spännande scenario"
+"session_456","Rögle BK","Linköping HC",1,2,FALSE,TRUE,"Spännande scenario"

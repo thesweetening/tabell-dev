@@ -253,10 +253,10 @@ class SHLSimulator {
             },
             matches: {
                 data: [
-                    { id: 'match1', fields: { Hemmalag: ['demo1'], Bortalag: ['demo2'], Datum: '2024-11-01', Hemmaresultat: null, Bortaresultat: null } },
-                    { id: 'match2', fields: { Hemmalag: ['demo3'], Bortalag: ['demo4'], Datum: '2024-11-02', Hemmaresultat: null, Bortaresultat: null } },
-                    { id: 'match3', fields: { Hemmalag: ['demo5'], Bortalag: ['demo6'], Datum: '2024-11-03', Hemmaresultat: null, Bortaresultat: null } },
-                    { id: 'match4', fields: { Hemmalag: ['demo7'], Bortalag: ['demo8'], Datum: '2024-11-04', Hemmaresultat: null, Bortaresultat: null } }
+                    { id: 'match1', fields: { Hemmalag: ['demo1'], Bortalag: ['demo2'], Datum: '2025-11-01', Hemmaresultat: null, Bortaresultat: null } },
+                    { id: 'match2', fields: { Hemmalag: ['demo3'], Bortalag: ['demo4'], Datum: '2025-11-02', Hemmaresultat: null, Bortaresultat: null } },
+                    { id: 'match3', fields: { Hemmalag: ['demo5'], Bortalag: ['demo6'], Datum: '2025-11-03', Hemmaresultat: null, Bortaresultat: null } },
+                    { id: 'match4', fields: { Hemmalag: ['demo7'], Bortalag: ['demo8'], Datum: '2025-11-04', Hemmaresultat: null, Bortaresultat: null } }
                 ]
             }
         };
@@ -332,7 +332,12 @@ class SHLSimulator {
 
     renderTable() {
         const tableContainer = document.getElementById('standings-table');
-        if (!tableContainer) return;
+        if (!tableContainer) {
+            console.error('❌ Kunde inte hitta standings-table element');
+            return;
+        }
+        
+        console.log('📋 Renderar tabell med', this.teamStats.length, 'lag');
 
         // Sortera lag efter poäng (P) och sedan efter målskillnad
         const sortedStats = [...this.teamStats].sort((a, b) => {
@@ -391,7 +396,12 @@ class SHLSimulator {
 
     renderMatches() {
         const matchesContainer = document.getElementById('matches-container');
-        if (!matchesContainer) return;
+        if (!matchesContainer) {
+            console.error('❌ Kunde inte hitta matches-container element');
+            return;
+        }
+        
+        console.log('🏒 Renderar matcher:', this.matches.length, 'totalt');
 
         // Filtrera matcher utan resultat (framtida matcher)
         const upcomingMatches = this.matches.filter(match => 
@@ -568,10 +578,13 @@ class SHLSimulator {
 
     formatDate(dateString) {
         try {
+            if (!dateString) return 'Inget datum';
             const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
             return date.toLocaleDateString('sv-SE');
         } catch (error) {
-            return dateString;
+            console.warn('Datum-formaterings-fel:', error, dateString);
+            return dateString || 'Okänt datum';
         }
     }
 

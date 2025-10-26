@@ -27,7 +27,11 @@ console.log('📧 Authorized emails:', AUTHORIZED_EMAILS);
 
 // Middleware
 app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+        process.env.FRONTEND_URL || 'http://localhost:3000',
+        'http://localhost:8000', // För Python HTTP server
+        'https://thesweetening.github.io' // För staging
+    ],
     credentials: true
 }));
 
