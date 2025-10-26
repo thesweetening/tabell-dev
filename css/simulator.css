@@ -1,0 +1,284 @@
+/* SHL Simulator CSS */
+
+.simulator-container {
+    padding: 2rem 0;
+}
+
+.simulator-title {
+    text-align: center;
+    color: var(--primary-color);
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.simulator-subtitle {
+    text-align: center;
+    color: var(--text-color);
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    opacity: 0.9;
+}
+
+.simulator-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Tabell-sektion */
+.table-section {
+    background: var(--white);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.table-section h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.table-controls {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+.shl-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.shl-table th {
+    background-color: var(--primary-color);
+    color: var(--white);
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+}
+
+.shl-table td {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shl-table tr:hover {
+    background-color: rgba(220, 20, 60, 0.05);
+}
+
+.shl-table .team-name {
+    text-align: left;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.shl-table .position {
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+/* Playoff-positioner */
+.shl-table tr.playoff {
+    background-color: rgba(34, 139, 34, 0.1);
+}
+
+.shl-table tr.qualification {
+    background-color: rgba(255, 165, 0, 0.1);
+}
+
+.shl-table tr.relegation {
+    background-color: rgba(220, 20, 60, 0.1);
+}
+
+/* Match-sektion */
+.matches-section {
+    background: var(--white);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.matches-section h2 {
+    color: var(--primary-color);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.match-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.date-filter {
+    padding: 0.5rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.25rem;
+    color: var(--text-color);
+}
+
+.matches-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Match-kort */
+.match-card {
+    background: rgba(220, 20, 60, 0.05);
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    transition: all 0.3s;
+}
+
+.match-card:hover {
+    background: rgba(220, 20, 60, 0.1);
+    border-color: var(--primary-color);
+}
+
+.match-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.match-date {
+    font-size: 0.9rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.match-time {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+}
+
+.match-teams {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-color);
+    text-align: center;
+    margin-bottom: 0.75rem;
+}
+
+.match-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.score-input {
+    width: 50px;
+    padding: 0.4rem;
+    border: 2px solid var(--border-color);
+    border-radius: 0.25rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.score-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.score-separator {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+/* Knappar */
+.btn-secondary {
+    background-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--secondary-color);
+    color: var(--white);
+}
+
+/* Responsiv design */
+@media (max-width: 1024px) {
+    .simulator-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .matches-section {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .simulator-title {
+        font-size: 2rem;
+    }
+    
+    .table-controls,
+    .match-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .shl-table {
+        font-size: 0.8rem;
+    }
+    
+    .shl-table th,
+    .shl-table td {
+        padding: 0.5rem 0.25rem;
+    }
+    
+    .match-header {
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+}
+
+/* Loading state */
+.loading {
+    text-align: center;
+    color: var(--secondary-color);
+    font-style: italic;
+    padding: 2rem;
+}
+
+.error {
+    text-align: center;
+    color: #dc3545;
+    padding: 1rem;
+    background: rgba(220, 53, 69, 0.1);
+    border-radius: 0.5rem;
+    border: 1px solid #dc3545;
+    margin: 1rem 0;
+}
+
+/* Resultat indikationer */
+.match-card.has-result {
+    background: rgba(34, 139, 34, 0.1);
+    border-color: #228b22;
+}
+
+.match-card.has-result .match-teams {
+    color: #228b22;
+}
