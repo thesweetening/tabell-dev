@@ -166,17 +166,62 @@ async function testSingleMatchImport() {
             
             return true;
         } else {
-            console.log('📭 Inga matcher finns i Airtable Matches-tabellen ännu');
-            console.log('💡 Det här förklarar varför importen kan ha problem');
+            console.log('📭 Matches-tabellen är tom - det är därför importen misslyckas');
+            console.log('💡 Låt oss skapa en minimal test-match för att se vilka fält som fungerar');
             
-            // Testa att hämta schema istället
-            console.log('🔍 Försöker hämta tabellstruktur...');
-            const schemaResponse = await window.SHLImporter.airtableRequest(
-                `${window.SHLImporter.config.matchesTable}?maxRecords=0`
-            );
-            console.log('📋 Tabellsvar (utan records):', schemaResponse);
+            // Testa med bara de absolut nödvändigaste fälten
+            const teams = await window.SHLImporter.fetchTeams();
+            const teamIds = Object.values(teams);
             
-            return false;
+            if (teamIds.length >= 2) {
+                console.log('🧪 Försöker skapa minimal test-match med bara lagkopplingar...');
+                
+                // Testa olika fältnamn-varianter
+                const testVariants = [
+                    // Variant 1: Enkla namn
+                    {
+                        home_team: [teamIds[0]],
+                        away_team: [teamIds[1]]
+                    },
+                    // Variant 2: Stora bokstäver
+                    {
+                        Home_Team: [teamIds[0]], 
+                        Away_Team: [teamIds[1]]
+                    },
+                    // Variant 3: Med mellanslag  
+                    {
+                        'Home Team': [teamIds[0]],
+                        'Away Team': [teamIds[1]]
+                    }
+                ];
+                
+                for (let i = 0; i < testVariants.length; i++) {
+                    try {
+                        console.log(`� Testar variant ${i + 1}:`, testVariants[i]);
+                        
+                        const testResponse = await window.SHLImporter.airtableRequest(
+                            window.SHLImporter.config.matchesTable,
+                            'POST',
+                            { records: [{ fields: testVariants[i] }] }
+                        );
+                        
+                        console.log(`✅ VARIANT ${i + 1} FUNGERADE!`, testResponse);
+                        console.log('🎯 Nu vet vi vilka fältnamn som fungerar');
+                        return true;
+                        
+                    } catch (error) {
+                        console.log(`❌ Variant ${i + 1} misslyckades:`, error.message);
+                        continue;
+                    }
+                }
+                
+                console.log('❌ Alla varianter misslyckades - kontrollera fältnamnen i Airtable');
+                return false;
+                
+            } else {
+                console.log('❌ Inte tillräckligt med lag för att testa');
+                return false;
+            }
         }
         
     } catch (error) {

@@ -166,7 +166,7 @@
             
             <button class="button" onclick="startImport()" id="importBtn">Importera Matcher</button>
             <button class="button" onclick="runDebug()" style="background: #f59e0b;">🔍 Debug Import</button>
-            <button class="button" onclick="testSingle()" style="background: #10b981;">🔍 Visa Airtable Struktur</button>
+            <button class="button" onclick="testSingle()" style="background: #10b981;">🧪 Hitta Rätta Fältnamn</button>
             <button class="button danger" onclick="clearLog()">Rensa Log</button>
         </div>
         
@@ -414,12 +414,13 @@
                 console.error = originalError;
                 
                 if (success) {
-                    showStatus('✅ Test lyckades! Import borde fungera', 'success');
-                    log('✅ En test-match skapades i Airtable', 'success');
-                    log('🎯 Detta betyder att batch-importen borde fungera också', 'info');
+                    showStatus('✅ Hittade fungerande fältnamn!', 'success');
+                    log('✅ En test-match skapades - nu vet vi rätt format', 'success');
+                    log('🎯 Nu kan vi uppdatera import-koden med rätta fältnamn', 'info');
                 } else {
-                    showStatus('❌ Test misslyckades', 'error');
-                    log('❌ Kunde inte skapa test-match', 'error');
+                    showStatus('❌ Kunde inte hitta fungerande fältnamn', 'error');
+                    log('❌ Kontrollera fältnamnen i din Airtable Matches-tabell', 'error');
+                    log('💡 Se till att du har fält för Home Team och Away Team (länkade till Teams)', 'warning');
                 }
                 
             } catch (error) {
