@@ -165,6 +165,7 @@
             <p>Importera SHL-matcher från CSV-fil till Airtable:</p>
             
             <button class="button" onclick="startImport()" id="importBtn">Importera Matcher</button>
+            <button class="button" onclick="runDebug()" style="background: #f59e0b;">🔍 Debug Import</button>
             <button class="button danger" onclick="clearLog()">Rensa Log</button>
         </div>
         
@@ -176,6 +177,7 @@
     </div>
 
     <script src="airtable-importer.js"></script>
+    <script src="debug-import.js"></script>
     <script>
         let isImporting = false;
         
@@ -328,6 +330,26 @@
         
         function clearLog() {
             document.getElementById('log').textContent = 'Log rensad.\n';
+        }
+        
+        async function runDebug() {
+            log('🔍 Startar debug-analys...', 'info');
+            
+            try {
+                const results = await window.debugImportIssues();
+                
+                if (results.missingTeams.length === 0) {
+                    showStatus('✅ Debug OK - Alla lag kan mappas!', 'success');
+                    log('✅ Debug visar att alla lag ska kunna importeras', 'success');
+                } else {
+                    showStatus(`❌ Debug hittade ${results.missingTeams.length} problem`, 'error');
+                    log(`❌ Hittade ${results.missingTeams.length} lagnamn-problem`, 'error');
+                }
+                
+            } catch (error) {
+                showStatus('Debug misslyckades', 'error');
+                log(`Debug fel: ${error.message}`, 'error');
+            }
         }
         
         // Ladda sparad konfiguration vid sidladdning
