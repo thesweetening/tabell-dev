@@ -478,9 +478,22 @@ class SHLSimulator {
         
         console.log('🏒 Renderar matcher:', this.matches.length, 'totalt');
 
-        // Filtrera matcher som inte är färdiga och sortera efter datum
+        // Filtrera matcher som inte är färdiga OCH som är framtida/idag
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Sätt till början av dagen
+        
         const upcomingMatches = this.matches
-            .filter(match => !match.finished && (match.homeScore === null || match.awayScore === null))
+            .filter(match => {
+                // Filtrera bort färdiga matcher
+                if (match.finished || (match.homeScore !== null && match.awayScore !== null)) {
+                    return false;
+                }
+                
+                // Filtrera bort gamla matcher (före idag)
+                const matchDate = new Date(match.match_date || match.date || '');
+                matchDate.setHours(0, 0, 0, 0);
+                return matchDate >= today;
+            })
             .sort((a, b) => {
                 const dateA = new Date(a.match_date || a.date || '');
                 const dateB = new Date(b.match_date || b.date || '');
@@ -619,8 +632,8 @@ class SHLSimulator {
         const homeScore = parseInt(homeInput.value) || 0;
         const awayScore = parseInt(awayInput.value) || 0;
         
-        // Bara uppdatera om båda scores är ifyllda
-        if (homeScore > 0 || awayScore > 0) {
+        // Uppdatera även om bara ett score är ifyllt
+        if (homeScore >= 0 || awayScore >= 0) {
             const resultType = resultSelect ? resultSelect.value : 'regular';
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
@@ -634,6 +647,9 @@ class SHLSimulator {
                 awayTeam: awayTeam
             });
             
+            // Debug-loggning
+            console.log(`🏒 Simulerar: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+            
             // Uppdatera statistik
             this.updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
             
@@ -642,6 +658,7 @@ class SHLSimulator {
             matchContainer.style.border = '1px solid #4CAF50';
             
             // Uppdatera tabellen direkt
+            console.log('📊 Uppdaterar tabell efter simulering...');
             this.renderTable();
         } else {
             // Ta bort simulering om scores rensas
@@ -664,90 +681,9 @@ class SHLSimulator {
         }
     }
 
-    handleScoreInput(input) {
-        const matchId = input.dataset.matchId;
-        const team = input.dataset.team;
-        const score = parseInt(input.value) || 0;
 
-        // Hämta eller skapa simulerat resultat för denna match
-        let result = this.simulatedResults.get(matchId) || { homeScore: null, awayScore: null };
-        
-        if (team === 'home') {
-            result.homeScore = score;
-        } else {
-            result.awayScore = score;
-        }
 
-        this.simulatedResults.set(matchId, result);
 
-        // Uppdatera statistik om båda resultat finns
-        if (result.homeScore !== null && result.awayScore !== null) {
-            this.updateTeamStats(matchId, result.homeScore, result.awayScore);
-            this.renderTable(); // Uppdatera tabellen
-        }
-    }
-
-    updateTeamStats(matchId, homeScore, awayScore) {
-        const match = this.matches.find(m => m.id === matchId);
-        if (!match) return;
-
-        // Hitta lag-statistik
-        const homeStats = this.teamStats.find(s => s.teamId === match.homeTeamId);
-        const awayStats = this.teamStats.find(s => s.teamId === match.awayTeamId);
-
-        if (!homeStats || !awayStats) return;
-
-        // Återställ till ursprunglig statistik först
-        const originalHome = this.originalStats.get(match.homeTeamId);
-        const originalAway = this.originalStats.get(match.awayTeamId);
-
-        if (originalHome) {
-            Object.assign(homeStats, { ...originalHome });
-        }
-        if (originalAway) {
-            Object.assign(awayStats, { ...originalAway });
-        }
-
-        // Lägg till alla simulerade resultat
-        this.simulatedResults.forEach((result, simMatchId) => {
-            if (result.homeScore !== null && result.awayScore !== null) {
-                const simMatch = this.matches.find(m => m.id === simMatchId);
-                if (!simMatch) return;
-
-                const simHomeStats = this.teamStats.find(s => s.teamId === simMatch.homeTeamId);
-                const simAwayStats = this.teamStats.find(s => s.teamId === simMatch.awayTeamId);
-
-                if (!simHomeStats || !simAwayStats) return;
-
-                // Uppdatera statistik baserat på resultatet
-                simHomeStats.GP = (simHomeStats.GP || 0) + 1;
-                simAwayStats.GP = (simAwayStats.GP || 0) + 1;
-                
-                simHomeStats.GF = (simHomeStats.GF || 0) + result.homeScore;
-                simHomeStats.GA = (simHomeStats.GA || 0) + result.awayScore;
-                simAwayStats.GF = (simAwayStats.GF || 0) + result.awayScore;
-                simAwayStats.GA = (simAwayStats.GA || 0) + result.homeScore;
-
-                if (result.homeScore > result.awayScore) {
-                    // Hemmaseger
-                    simHomeStats.W = (simHomeStats.W || 0) + 1;
-                    simHomeStats.P = (simHomeStats.P || 0) + 3;
-                    simAwayStats.L = (simAwayStats.L || 0) + 1;
-                } else if (result.awayScore > result.homeScore) {
-                    // Bortaseger
-                    simAwayStats.W = (simAwayStats.W || 0) + 1;
-                    simAwayStats.P = (simAwayStats.P || 0) + 3;
-                    simHomeStats.L = (simHomeStats.L || 0) + 1;
-                } else {
-                    // Oavgjort (overtime loss för båda i detta fall)
-                    simHomeStats.OTL = (simHomeStats.OTL || 0) + 1;
-                    simHomeStats.P = (simHomeStats.P || 0) + 1;
-                    simAwayStats.OTL = (simAwayStats.OTL || 0) + 1;
-                    simAwayStats.P = (simAwayStats.P || 0) + 1;
-                }
-            }
-        });
-    }
 
 
 

@@ -21,11 +21,11 @@
 
 .simulator-layout {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 2fr; /* Smalare matchlista, bredare tabell */
     gap: 2rem;
     margin-top: 2rem;
     align-items: start;
-    height: 850px;
+    height: 950px; /* Högre för att visa alla 14 lag */
 }
 
 /* Tabell-sektion */
@@ -34,7 +34,7 @@
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    height: 850px;
+    height: 950px; /* Högre för att visa alla 14 lag */
     display: flex;
     flex-direction: column;
 }
@@ -106,13 +106,12 @@
 }
 
 /* Match-sektion */
-.matches-section {
+.match-section {
     background: var(--white);
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    height: 850px;
-    overflow-y: auto;
+    height: 950px; /* Högre för att matcha tabellsektionen */
     display: flex;
     flex-direction: column;
 }
