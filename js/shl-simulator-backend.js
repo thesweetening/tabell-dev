@@ -460,7 +460,7 @@ class SHLSimulator {
                     </select>
                 </label>
                 <p style="margin: 8px 0 0 0; font-size: 14px; color: #666;">
-                    En omgång = alla matcher som spelas samma datum. Välj resultat-typ och klicka "Tillämpa" för att uppdatera tabellen.
+                    En omgång = alla matcher som spelas samma datum. Fyll i resultat så uppdateras tabellen automatiskt!
                 </p>
             </div>
         `;
@@ -507,12 +507,11 @@ class SHLSimulator {
                         '</div>' +
                     '</div>' +
                     '<div class="match-options" style="text-align: center;">' +
-                        '<select class="result-type" data-match-id="' + match.id + '" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">' +
+                        '<select class="result-type" data-match-id="' + match.id + '" style="padding: 4px 8px; border: 1px solid #ccc; border-radius: 4px; color: #333;">' +
                             '<option value="regular">Ordinarie tid</option>' +
                             '<option value="overtime">Övertid</option>' +
                             '<option value="shootout">Straffläggning</option>' +
                         '</select>' +
-                        '<button class="apply-result" data-match-id="' + match.id + '" style="padding: 6px 12px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Tillämpa</button>' +
                     '</div>' +
                 '</div>';
             }).join('');
@@ -536,18 +535,18 @@ class SHLSimulator {
     }
 
     setupEventListeners() {
-        // Lyssna på ändringar i resultat-inputs
+        // Lyssna på ändringar i resultat-inputs för auto-uppdatering
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('score-input')) {
-                // Auto-update vid input-ändring (behåller gamla funktionaliteten)
-                // this.handleScoreInput(e.target);
+                this.handleScoreInput(e.target);
             }
         });
 
-        // Lyssna på "Tillämpa"-knappar
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('apply-result')) {
-                this.applyMatchResult(e.target.dataset.matchId);
+        // Lyssna på ändringar i resultat-typ dropdown
+        document.addEventListener('change', (e) => {
+            if (e.target.classList.contains('result-type')) {
+                const matchId = e.target.dataset.matchId;
+                this.handleScoreInput(document.querySelector(`[data-match-id="${matchId}"].score-input`));
             }
         });
 
@@ -555,6 +554,68 @@ class SHLSimulator {
         const resetBtn = document.getElementById('reset-btn');
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetSimulation());
+        }
+    }
+
+    handleScoreInput(inputElement) {
+        if (!inputElement) return;
+        
+        const matchId = inputElement.dataset.matchId;
+        const matchContainer = inputElement.closest('.match-item');
+        
+        if (!matchContainer) return;
+
+        const homeInput = matchContainer.querySelector('.score-input[data-team-type="home"]');
+        const awayInput = matchContainer.querySelector('.score-input[data-team-type="away"]');
+        const resultSelect = matchContainer.querySelector('.result-type');
+        
+        if (!homeInput || !awayInput) return;
+
+        const homeScore = parseInt(homeInput.value) || 0;
+        const awayScore = parseInt(awayInput.value) || 0;
+        
+        // Bara uppdatera om båda scores är ifyllda
+        if (homeScore > 0 || awayScore > 0) {
+            const resultType = resultSelect ? resultSelect.value : 'regular';
+            const homeTeam = homeInput.dataset.team;
+            const awayTeam = awayInput.dataset.team;
+            
+            // Spara simulerat resultat
+            this.simulatedResults.set(matchId, {
+                homeScore: homeScore,
+                awayScore: awayScore,
+                resultType: resultType,
+                homeTeam: homeTeam,
+                awayTeam: awayTeam
+            });
+            
+            // Uppdatera statistik
+            this.updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
+            
+            // Markera matchen som simulerad
+            matchContainer.style.backgroundColor = '#f0f8f0';
+            matchContainer.style.border = '1px solid #4CAF50';
+            
+            // Uppdatera tabellen direkt
+            this.renderTable();
+        } else {
+            // Ta bort simulering om scores rensas
+            if (this.simulatedResults.has(matchId)) {
+                this.simulatedResults.delete(matchId);
+                // Återställ originaldata och rendera om
+                this.loadTeamStats().then(() => {
+                    // Återapplicera alla aktiva simuleringar
+                    for (const [simMatchId, simResult] of this.simulatedResults) {
+                        this.updateTeamStats(simResult.homeTeam, simResult.awayTeam, 
+                                           simResult.homeScore, simResult.awayScore, simResult.resultType);
+                    }
+                    this.renderTable();
+                });
+                
+                // Återställ matchens utseende
+                matchContainer.style.backgroundColor = '';
+                matchContainer.style.border = '';
+            }
         }
     }
 
@@ -643,49 +704,7 @@ class SHLSimulator {
         });
     }
 
-    applyMatchResult(matchId) {
-        console.log('Applying match result for match:', matchId);
-        
-        const matchContainer = document.querySelector('[data-match-id="' + matchId + '"]').closest('.match-item');
-        if (!matchContainer) {
-            console.error('Match container not found');
-            return;
-        }
-        
-        // Hämta hemmalag och bortalag
-        const homeInput = matchContainer.querySelector('.score-input[data-team-type="home"]');
-        const awayInput = matchContainer.querySelector('.score-input[data-team-type="away"]');
-        const resultSelect = matchContainer.querySelector('.result-type');
-        
-        if (!homeInput || !awayInput) {
-            console.error('Score inputs not found');
-            return;
-        }
-        
-        const homeScore = parseInt(homeInput.value) || 0;
-        const awayScore = parseInt(awayInput.value) || 0;
-        const resultType = resultSelect ? resultSelect.value : 'regular';
-        
-        if (homeScore === 0 && awayScore === 0) {
-            alert('Ange resultat för matchen först');
-            return;
-        }
-        
-        const homeTeam = homeInput.dataset.team;
-        const awayTeam = awayInput.dataset.team;
-        
-        console.log('Applying result: ' + homeTeam + ' ' + homeScore + ' - ' + awayScore + ' ' + awayTeam + ' (' + resultType + ')');
-        
-        // Uppdatera statistik baserat på resultat
-        this.updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
-        
-        // Markera matchen som spelad
-        matchContainer.style.backgroundColor = '#f0f8f0';
-        matchContainer.style.border = '1px solid #4CAF50';
-        
-        // Uppdatera tabellen
-        this.renderTable();
-    }
+
 
     updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
