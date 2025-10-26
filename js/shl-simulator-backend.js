@@ -25,9 +25,9 @@ class SHLSimulator {
             return 'http://localhost:3001';
         }
         
-        // Staging/produktion
+        // Staging/produktion - använder PHP config istället för backend
         if (hostname.includes('tabell.top')) {
-            return 'https://tabell.top/api';
+            return null; // Använder direktaccess med PHP config
         }
         
         // Fallback
@@ -89,7 +89,18 @@ class SHLSimulator {
 
     async loadDirectConfig() {
         try {
-            // Försök läsa från localStorage (admin-panelen)
+            // För staging: försök läsa från PHP config
+            if (window.location.hostname.includes('tabell.top')) {
+                console.log('🌐 Laddar konfiguration från PHP...');
+                const response = await fetch('api-config.php');
+                if (response.ok) {
+                    this.CONFIG = await response.json();
+                    console.log('✅ Konfiguration laddad från server PHP');
+                    return;
+                }
+            }
+            
+            // För localhost: försök läsa från localStorage (admin-panelen)
             const savedApiKey = localStorage.getItem('airtable_api_key');
             const savedBaseId = localStorage.getItem('airtable_base_id');
             
