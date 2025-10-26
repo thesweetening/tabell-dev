@@ -309,9 +309,13 @@ class SHLSimulator {
                 id: record.id,
                 teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
                 GP: record.fields.games,
-                W: record.fields.wins,
-                L: record.fields.losses,
-                OTL: record.fields.overtime_losses,
+                W: record.fields.wins, // Behåller för backwards compatibility
+                wins: record.fields.wins, // Korrekt fält från Team_Stats
+                overtime_wins: record.fields.overtime_wins,
+                L: record.fields.losses, // Behåller för backwards compatibility
+                losses: record.fields.losses, // Korrekt fält från Team_Stats
+                OTL: record.fields.overtime_losses, // Behåller för backwards compatibility
+                overtime_losses: record.fields.overtime_losses, // Korrekt fält från Team_Stats
                 P: record.fields.points,
                 GF: record.fields.goals_for,
                 GA: record.fields.goals_against,
@@ -404,10 +408,10 @@ class SHLSimulator {
                                 <td style="text-align: center; font-weight: bold; color: #333 !important;">${index + 1}</td>
                                 <td class="team-name" style="font-weight: bold; color: #dc2626 !important;">${teamName}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.GP || 0}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.W || 0}</td>
-                                <td style="text-align: center; color: #333 !important;">${(stat.wins || 0) + (stat.overtime_wins || 0)}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.L || 0}</td>
-                                <td style="text-align: center; color: #333 !important;">${stat.OTL || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.wins || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.overtime_wins || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.losses || 0}</td>
+                                <td style="text-align: center; color: #333 !important;">${stat.overtime_losses || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.GF || 0}</td>
                                 <td style="text-align: center; color: #333 !important;">${stat.GA || 0}</td>
                                 <td style="text-align: center; color: ${goalDiff > 0 ? '#2e7d32' : goalDiff < 0 ? '#d32f2f' : '#333'} !important; font-weight: bold;">${goalDiff > 0 ? '+' : ''}${goalDiff}</td>
@@ -731,15 +735,19 @@ class SHLSimulator {
         
         if (homeScore > awayScore) {
             homeWin = true;
-            homeStats.W = (homeStats.W || 0) + 1;
+            homeStats.wins = (homeStats.wins || 0) + 1;
+            homeStats.W = (homeStats.W || 0) + 1; // Behåll för compatibility
             if (resultType === 'regular') {
-                awayStats.L = (awayStats.L || 0) + 1;
+                awayStats.losses = (awayStats.losses || 0) + 1;
+                awayStats.L = (awayStats.L || 0) + 1; // Behåll för compatibility
             }
         } else if (awayScore > homeScore) {
             awayWin = true;
-            awayStats.W = (awayStats.W || 0) + 1;
+            awayStats.wins = (awayStats.wins || 0) + 1;
+            awayStats.W = (awayStats.W || 0) + 1; // Behåll för compatibility
             if (resultType === 'regular') {
-                homeStats.L = (homeStats.L || 0) + 1;
+                homeStats.losses = (homeStats.losses || 0) + 1;
+                homeStats.L = (homeStats.L || 0) + 1; // Behåll för compatibility
             }
         }
         
@@ -749,11 +757,19 @@ class SHLSimulator {
             if (homeWin) {
                 homeStats.P = (homeStats.P || 0) + 2; // Vinst i förlängning/straffar = 2p
                 awayStats.P = (awayStats.P || 0) + 1; // Förlust i förlängning/straffar = 1p
-                awayStats.OTL = (awayStats.OTL || 0) + 1; // Övertidsförlust
+                awayStats.overtime_losses = (awayStats.overtime_losses || 0) + 1; // Korrekt fält
+                awayStats.OTL = (awayStats.OTL || 0) + 1; // Behåll för compatibility
+                if (resultType === 'overtime') {
+                    homeStats.overtime_wins = (homeStats.overtime_wins || 0) + 1;
+                }
             } else {
                 awayStats.P = (awayStats.P || 0) + 2;
                 homeStats.P = (homeStats.P || 0) + 1;
-                homeStats.OTL = (homeStats.OTL || 0) + 1;
+                homeStats.overtime_losses = (homeStats.overtime_losses || 0) + 1; // Korrekt fält
+                homeStats.OTL = (homeStats.OTL || 0) + 1; // Behåll för compatibility
+                if (resultType === 'overtime') {
+                    awayStats.overtime_wins = (awayStats.overtime_wins || 0) + 1;
+                }
             }
         } else {
             // Ordinarie tid - bara vinnaren får poäng
