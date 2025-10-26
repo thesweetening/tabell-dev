@@ -391,7 +391,9 @@ class SHLSimulator {
             </table>
         `;
 
+        console.log('📄 Sätter HTML för tabell, längd:', tableHTML.length);
         tableContainer.innerHTML = tableHTML;
+        console.log('✅ Tabell HTML uppsatt');
     }
 
     renderMatches() {
@@ -454,7 +456,9 @@ class SHLSimulator {
             `;
         }).join('');
 
+        console.log('📄 Sätter HTML för matcher, längd:', matchesHTML.length);
         matchesContainer.innerHTML = matchesHTML;
+        console.log('✅ Matcher HTML uppsatt');
     }
 
     setupEventListeners() {
