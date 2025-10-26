@@ -47,8 +47,11 @@ class SHLSimulator {
             }
             
             // Ladda data
+            console.log('🔍 DEBUG: Startar laddning av Teams...');
             await this.loadTeamsData();
+            console.log('🔍 DEBUG: Startar laddning av Team_Stats...');
             await this.loadTeamStatsData();
+            console.log('🔍 DEBUG: Startar laddning av Matches...');
             await this.loadMatchesData();
             
             // Rendera gränssnittet
@@ -304,6 +307,7 @@ class SHLSimulator {
         
         try {
             const response = await this.apiRequest('team-stats');
+            console.log('🔍 DEBUG: Team_Stats API response:', response);
             
             // Debug: Skriv ut första posten för att se vad vi får från Airtable
             if (response.data.length > 0) {
