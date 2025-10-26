@@ -19,14 +19,18 @@ class SHLSimulator {
 
     getBackendUrl() {
         const hostname = window.location.hostname;
-        const port = window.location.port;
         
-        // Localhost med olika portar
+        // Localhost
         if (hostname === 'localhost' || hostname === '127.0.0.1') {
-            return 'http://localhost:3001'; // Backend port
+            return 'http://localhost:3001';
         }
         
-        // Staging/produktion - använd fallback
+        // Staging/produktion
+        if (hostname.includes('tabell.top')) {
+            return 'https://tabell.top/api';
+        }
+        
+        // Fallback
         return null;
     }
 
@@ -85,11 +89,11 @@ class SHLSimulator {
 
     async loadDirectConfig() {
         try {
-            // Först: försök läsa från localStorage (admin-panelen)
+            // Försök läsa från localStorage (admin-panelen)
             const savedApiKey = localStorage.getItem('airtable_api_key');
             const savedBaseId = localStorage.getItem('airtable_base_id');
             
-            if (savedApiKey && savedBaseId) {
+            if (savedApiKey && savedBaseId && savedApiKey !== 'demo_mode') {
                 this.CONFIG = {
                     airtable: {
                         apiKey: savedApiKey,
@@ -100,14 +104,14 @@ class SHLSimulator {
                 return;
             }
 
-            // Fallback till inbyggd konfiguration för demo
+            // Fallback till demo-data endast som sista utväg
             this.CONFIG = {
                 airtable: {
                     apiKey: 'demo_mode',
                     baseId: 'demo_mode'
                 }
             };
-            console.log('⚠️ Demo-läge aktiverat - ingen riktig data');
+            console.log('⚠️ Demo-läge aktiverat - använder inbyggd data');
             
         } catch (error) {
             console.error('❌ Fel vid direktaccess-konfiguration:', error);
