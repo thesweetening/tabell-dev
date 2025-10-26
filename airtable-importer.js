@@ -226,7 +226,7 @@ function convertMatchForAirtable(match, teams) {
     
     const airtableMatch = {
         fields: {
-            match_id: match.match_id,
+            // match_id removed - det är ett computed field i Airtable
             date: match.date,
             time: match.time,
             home_team: [homeTeamId], // Array för länkade records
@@ -304,6 +304,7 @@ async function importMatches(matches, teams) {
 
 /**
  * Kontrollerar om matcher redan finns i Airtable
+ * Använder datum+tid+lag för att identifiera matcher eftersom match_id är computed
  */
 async function checkExistingMatches() {
     console.log('Kontrollerar befintliga matcher i Airtable...');
@@ -313,8 +314,13 @@ async function checkExistingMatches() {
         const existingMatches = new Set();
         
         response.records.forEach(record => {
-            if (record.fields.match_id) {
-                existingMatches.add(record.fields.match_id);
+            const fields = record.fields;
+            // Skapa unik identifierare från datum, tid och lag
+            if (fields.date && fields.time && fields.home_team && fields.away_team) {
+                const homeTeamName = Array.isArray(fields.home_team) ? fields.home_team[0] : fields.home_team;
+                const awayTeamName = Array.isArray(fields.away_team) ? fields.away_team[0] : fields.away_team;
+                const matchKey = `${fields.date}_${fields.time}_${homeTeamName}_${awayTeamName}`;
+                existingMatches.add(matchKey);
             }
         });
         
@@ -356,7 +362,19 @@ async function importSHLMatches() {
         const existingMatches = await checkExistingMatches();
         
         // 5. Filtrera bort matcher som redan finns
-        const newMatches = csvMatches.filter(match => !existingMatches.has(match.match_id));
+        const newMatches = csvMatches.filter(match => {
+            // Skapa samma nyckel som i checkExistingMatches
+            const homeTeamMapped = teamNameMapping[match.home_team] || match.home_team;
+            const awayTeamMapped = teamNameMapping[match.away_team] || match.away_team;
+            const homeTeamId = teams[homeTeamMapped];
+            const awayTeamId = teams[awayTeamMapped];
+            
+            if (homeTeamId && awayTeamId) {
+                const matchKey = `${match.date}_${match.time}_${homeTeamId}_${awayTeamId}`;
+                return !existingMatches.has(matchKey);
+            }
+            return true; // Inkludera om vi inte kan skapa nyckeln
+        });
         
         console.log(`${csvMatches.length} matcher i CSV, ${existingMatches.size} finns redan, ${newMatches.length} nya att importera`);
         

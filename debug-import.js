@@ -186,7 +186,7 @@ async function testSingleMatchImport() {
         
         const airtableMatch = {
             fields: {
-                match_id: `TEST_${Date.now()}`, // Unik test-ID
+                // match_id removed - det är ett computed field i Airtable
                 date: testMatch.date,
                 time: testMatch.time,
                 home_team: [homeTeamId],
