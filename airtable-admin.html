@@ -334,22 +334,58 @@
         }
         
         async function runDebug() {
-            log('🔍 Startar debug-analys...', 'info');
+            log('🔍 Startar detaljerad debug-analys...', 'info');
             
             try {
+                // Omdirigera console.log till vår log-funktion under debug
+                const originalLog = console.log;
+                const originalWarn = console.warn;
+                const originalError = console.error;
+                
+                console.log = (...args) => {
+                    log(args.join(' '), 'info');
+                    originalLog.apply(console, args);
+                };
+                
+                console.warn = (...args) => {
+                    log(args.join(' '), 'warning');
+                    originalWarn.apply(console, args);
+                };
+                
+                console.error = (...args) => {
+                    log(args.join(' '), 'error');
+                    originalError.apply(console, args);
+                };
+                
                 const results = await window.debugImportIssues();
+                
+                // Återställ console
+                console.log = originalLog;
+                console.warn = originalWarn;
+                console.error = originalError;
+                
+                // Extra info direkt till log
+                log('📊 Teams från Airtable: ' + Object.keys(results.teamsFromAirtable).join(', '), 'info');
+                log('📋 Teams från CSV: ' + results.teamsFromCSV.join(', '), 'info');
+                
+                if (results.conversionTest) {
+                    log(`🧪 Konverteringstest - Kan konvertera: ${results.conversionTest.canConvert}`, results.conversionTest.canConvert ? 'success' : 'error');
+                    log(`   Home team ID: ${results.conversionTest.homeTeamId}`, 'info');
+                    log(`   Away team ID: ${results.conversionTest.awayTeamId}`, 'info');
+                }
                 
                 if (results.missingTeams.length === 0) {
                     showStatus('✅ Debug OK - Alla lag kan mappas!', 'success');
-                    log('✅ Debug visar att alla lag ska kunna importeras', 'success');
+                    log('✅ Alla lagnamn kan mappas korrekt', 'success');
                 } else {
                     showStatus(`❌ Debug hittade ${results.missingTeams.length} problem`, 'error');
-                    log(`❌ Hittade ${results.missingTeams.length} lagnamn-problem`, 'error');
+                    log(`❌ Saknade lag: ${JSON.stringify(results.missingTeams)}`, 'error');
                 }
                 
             } catch (error) {
                 showStatus('Debug misslyckades', 'error');
                 log(`Debug fel: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
             }
         }
         
@@ -357,19 +393,39 @@
             log('🧪 Testar att importera en enda match...', 'info');
             
             try {
+                // Omdirigera console för bättre logging
+                const originalLog = console.log;
+                const originalError = console.error;
+                
+                console.log = (...args) => {
+                    log(args.join(' '), 'info');
+                    originalLog.apply(console, args);
+                };
+                
+                console.error = (...args) => {
+                    log(args.join(' '), 'error');
+                    originalError.apply(console, args);
+                };
+                
                 const success = await window.testSingleMatchImport();
+                
+                // Återställ console
+                console.log = originalLog;
+                console.error = originalError;
                 
                 if (success) {
                     showStatus('✅ Test lyckades! Import borde fungera', 'success');
-                    log('✅ En match importerades framgångsrikt', 'success');
+                    log('✅ En test-match skapades i Airtable', 'success');
+                    log('🎯 Detta betyder att batch-importen borde fungera också', 'info');
                 } else {
                     showStatus('❌ Test misslyckades', 'error');
-                    log('❌ Kunde inte importera test-match', 'error');
+                    log('❌ Kunde inte skapa test-match', 'error');
                 }
                 
             } catch (error) {
                 showStatus('Test misslyckades', 'error');
                 log(`Test fel: ${error.message}`, 'error');
+                log(`Stack trace: ${error.stack}`, 'error');
             }
         }
         
