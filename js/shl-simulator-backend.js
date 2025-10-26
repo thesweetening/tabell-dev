@@ -320,17 +320,17 @@ class SHLSimulator {
                 return {
                     id: record.id,
                     teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
-                    // Använd EXAKT fältnamnen som de ser ut i Airtable
-                    games: record.fields.games,
-                    wins: record.fields.wins,
-                    overtime_wins: record.fields.overtime_wins,
-                    losses: record.fields["losses"], // Använd bracket notation för säkerhet
-                    overtime_losses: record.fields.overtime_losses,
-                    goals_for: record.fields.goals_for,
-                    goals_against: record.fields.goals_against,
-                    goal_difference: record.fields.goal_difference,
-                    points: record.fields.points,
-                    season: record.fields.season,
+                    // Använd bracket notation för ALLA fält för konsistens
+                    games: record.fields["games"],
+                    wins: record.fields["wins"],
+                    overtime_wins: record.fields["overtime_wins"],
+                    losses: record.fields["losses"],
+                    overtime_losses: record.fields["overtime_losses"],
+                    goals_for: record.fields["goals_for"],
+                    goals_against: record.fields["goals_against"],
+                    goal_difference: record.fields["goal_difference"],
+                    points: record.fields["points"],
+                    season: record.fields["season"],
                     ...record.fields
                 };
             });
