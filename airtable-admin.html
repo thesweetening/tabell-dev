@@ -166,6 +166,7 @@
             
             <button class="button" onclick="startImport()" id="importBtn">Importera Matcher</button>
             <button class="button" onclick="runDebug()" style="background: #f59e0b;">🔍 Debug Import</button>
+            <button class="button" onclick="testSingle()" style="background: #10b981;">🧪 Testa En Match</button>
             <button class="button danger" onclick="clearLog()">Rensa Log</button>
         </div>
         
@@ -349,6 +350,26 @@
             } catch (error) {
                 showStatus('Debug misslyckades', 'error');
                 log(`Debug fel: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testSingle() {
+            log('🧪 Testar att importera en enda match...', 'info');
+            
+            try {
+                const success = await window.testSingleMatchImport();
+                
+                if (success) {
+                    showStatus('✅ Test lyckades! Import borde fungera', 'success');
+                    log('✅ En match importerades framgångsrikt', 'success');
+                } else {
+                    showStatus('❌ Test misslyckades', 'error');
+                    log('❌ Kunde inte importera test-match', 'error');
+                }
+                
+            } catch (error) {
+                showStatus('Test misslyckades', 'error');
+                log(`Test fel: ${error.message}`, 'error');
             }
         }
         
