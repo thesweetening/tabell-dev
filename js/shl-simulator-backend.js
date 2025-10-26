@@ -338,6 +338,8 @@ class SHLSimulator {
         }
         
         console.log('📋 Renderar tabell med', this.teamStats.length, 'lag');
+        console.log('Teams:', this.teams.map(t => `${t.id}: ${t.Lag}`));
+        console.log('Stats teamIds:', this.teamStats.map(s => s.teamId));
 
         // Sortera lag efter poäng (P) och sedan efter målskillnad
         const sortedStats = [...this.teamStats].sort((a, b) => {
@@ -368,7 +370,7 @@ class SHLSimulator {
                 <tbody>
                     ${sortedStats.map((stat, index) => {
                         const team = this.teams.find(t => t.id === stat.teamId);
-                        const teamName = team ? team.Lag : 'Okänt lag';
+                        const teamName = team ? team.Lag : `Okänt lag (${stat.teamId})`;
                         const goalDiff = (stat.GF || 0) - (stat.GA || 0);
                         const goalDiffClass = goalDiff > 0 ? 'positive' : goalDiff < 0 ? 'negative' : '';
                         
