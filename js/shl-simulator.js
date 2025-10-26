@@ -14,7 +14,10 @@ class SHLSimulator {
         console.log('🏒 Initierar SHL Simulator...');
         
         try {
-            // Ladda data från Airtable
+            // Först: ladda API-konfiguration
+            await this.loadConfig();
+            
+            // Sedan: ladda data från Airtable
             await this.loadTeamsData();
             await this.loadMatchesData();
             
@@ -26,7 +29,58 @@ class SHLSimulator {
             console.log('✅ SHL Simulator redo!');
         } catch (error) {
             console.error('❌ Fel vid initiering:', error);
-            this.showError('Det gick inte att ladda data från databasen. Kontrollera din internetanslutning.');
+            this.showError(error.message || 'Det gick inte att ladda data från databasen.');
+        }
+    }
+
+    async loadConfig() {
+        try {
+            // Först: försök läsa från localStorage (admin-panelen)
+            const savedApiKey = localStorage.getItem('airtable_api_key');
+            const savedBaseId = localStorage.getItem('airtable_base_id');
+            
+            if (savedApiKey && savedBaseId) {
+                AIRTABLE_CONFIG.apiKey = savedApiKey;
+                AIRTABLE_CONFIG.baseId = savedBaseId;
+                console.log('✅ Konfiguration laddad från localStorage');
+                return;
+            }
+
+            // Annars: försök läsa från .env fil
+            const response = await fetch('.env');
+            if (response.ok) {
+                const envText = await response.text();
+                const lines = envText.split('\n');
+                
+                for (const line of lines) {
+                    const trimmedLine = line.trim();
+                    if (trimmedLine && !trimmedLine.startsWith('#')) {
+                        const [key, value] = trimmedLine.split('=');
+                        if (key && value) {
+                            if (key.trim() === 'AIRTABLE_API_KEY') {
+                                AIRTABLE_CONFIG.apiKey = value.trim();
+                            } else if (key.trim() === 'AIRTABLE_BASE_ID') {
+                                AIRTABLE_CONFIG.baseId = value.trim();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Validera att vi har nödvändiga värden
+            if (!AIRTABLE_CONFIG.apiKey || AIRTABLE_CONFIG.apiKey === 'your_personal_access_token_here') {
+                throw new Error('⚠️ Airtable API-nyckel saknas! Gå till admin-panelen (airtable-admin.html) för att konfigurera.');
+            }
+            
+            if (!AIRTABLE_CONFIG.baseId || AIRTABLE_CONFIG.baseId === 'your_base_id_here') {
+                throw new Error('⚠️ Airtable Base ID saknas! Gå till admin-panelen (airtable-admin.html) för att konfigurera.');
+            }
+
+            console.log('✅ Konfiguration laddad från .env fil');
+            
+        } catch (error) {
+            console.error('❌ Fel vid laddning av konfiguration:', error);
+            throw error;
         }
     }
 
@@ -42,10 +96,20 @@ class SHLSimulator {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (response.status === 401) {
+                    throw new Error('🔑 Ogiltig API-nyckel! Kontrollera din Airtable API-nyckel i admin-panelen.');
+                } else if (response.status === 404) {
+                    throw new Error('❌ Hittar inte Team_Stats tabellen! Kontrollera Base ID och tabellnamn.');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
             }
 
             const data = await response.json();
+            
+            if (!data.records || data.records.length === 0) {
+                throw new Error('⚠️ Inga lag hittades i Team_Stats tabellen! Har data importerats korrekt?');
+            }
             
             this.teams = data.records.map(record => ({
                 id: record.id,
@@ -79,7 +143,13 @@ class SHLSimulator {
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                if (response.status === 401) {
+                    throw new Error('🔑 Ogiltig API-nyckel för matchdata!');
+                } else if (response.status === 404) {
+                    throw new Error('❌ Hittar inte Matches tabellen! Kontrollera tabellnamnet.');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
             }
 
             const data = await response.json();
@@ -90,6 +160,11 @@ class SHLSimulator {
             }));
 
             console.log(`✅ Laddade ${this.matches.length} kommande matcher`);
+            
+            if (this.matches.length === 0) {
+                console.log('ℹ️ Inga kommande matcher hittades. Visar meddelande till användaren.');
+            }
+            
         } catch (error) {
             console.error('❌ Fel vid laddning av matchdata:', error);
             throw error;
@@ -364,24 +439,25 @@ class SHLSimulator {
     showError(message) {
         const container = document.querySelector('.simulator-container');
         if (container) {
-            container.innerHTML = `<div class="error">❌ ${message}</div>`;
+            let helpText = '';
+            
+            if (message.includes('API-nyckel')) {
+                helpText = '<br><br>💡 <strong>Lösning:</strong> Gå till <a href="airtable-admin.html" style="color: #dc143c;">admin-panelen</a> för att konfigurera API-nycklar.';
+            } else if (message.includes('tabellen')) {
+                helpText = '<br><br>💡 <strong>Lösning:</strong> Kontrollera att Airtable-databasen är korrekt uppsatt och att data har importerats.';
+            }
+            
+            container.innerHTML = `
+                <div class="error">
+                    ❌ ${message}
+                    ${helpText}
+                </div>
+            `;
         }
     }
 }
 
 // Starta simulatorn när sidan laddats
 document.addEventListener('DOMContentLoaded', () => {
-    // Kontrollera om vi har API-nyckel
-    if (!AIRTABLE_CONFIG.apiKey) {
-        const apiKey = prompt('Ange din Airtable API-nyckel:');
-        if (apiKey) {
-            localStorage.setItem('AIRTABLE_API_KEY', apiKey);
-            AIRTABLE_CONFIG.apiKey = apiKey;
-        } else {
-            alert('API-nyckel krävs för att använda simulatorn.');
-            return;
-        }
-    }
-
     new SHLSimulator();
 });
