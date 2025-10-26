@@ -166,7 +166,7 @@
             
             <button class="button" onclick="startImport()" id="importBtn">Importera Matcher</button>
             <button class="button" onclick="runDebug()" style="background: #f59e0b;">🔍 Debug Import</button>
-            <button class="button" onclick="testSingle()" style="background: #10b981;">🧪 Testa En Match</button>
+            <button class="button" onclick="testSingle()" style="background: #10b981;">🔍 Visa Airtable Struktur</button>
             <button class="button danger" onclick="clearLog()">Rensa Log</button>
         </div>
         
@@ -390,7 +390,7 @@
         }
         
         async function testSingle() {
-            log('🧪 Testar att importera en enda match...', 'info');
+            log('🔍 Kontrollerar Airtable Matches-tabellens struktur...', 'info');
             
             try {
                 // Omdirigera console för bättre logging

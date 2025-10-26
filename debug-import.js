@@ -143,74 +143,52 @@ async function debugImportIssues() {
 }
 
 /**
- * Testar att faktiskt skapa en match i Airtable
+ * Hämtar en befintlig match från Airtable för att se strukturen
  */
 async function testSingleMatchImport() {
-    console.log('🧪 Testar att importera EN match...');
+    console.log('🔍 Hämtar befintliga matcher för att se fältstrukturen...');
     
     try {
         await window.SHLImporter.loadConfig();
-        const teams = await window.SHLImporter.fetchTeams();
-        const matches = await window.SHLImporter.loadMatchesFromCSV();
         
-        const testMatch = matches[0]; // Första matchen
+        console.log('📥 Hämtar första matchen från Airtable Matches-tabellen...');
         
-        // Samma mappning som i huvudfunktionen
-        const teamNameMapping = {
-            'Färjestad BK': 'Färjestad BK',
-            'Frölunda HC': 'Frölunda HC', 
-            'Växjö Lakers': 'Växjö Lakers',
-            'Luleå Hockey': 'Luleå HF',
-            'Djurgårdens IF': 'Djurgården IF',
-            'Skellefteå AIK': 'Skellefteå AIK',
-            'HV71': 'HV71',
-            'Rögle BK': 'Rögle BK',
-            'Leksands IF': 'Leksands IF',
-            'Linköping HC': 'Linköping HC',
-            'Malmö Redhawks': 'Malmö Redhawks',
-            'Brynäs IF': 'Brynäs IF',
-            'Timrå IK': 'Timrå',
-            'Örebro Hockey': 'Örebro HK'
-        };
+        const response = await window.SHLImporter.airtableRequest(
+            `${window.SHLImporter.config.matchesTable}?maxRecords=1`
+        );
         
-        const homeTeamAirtableName = teamNameMapping[testMatch.home_team] || testMatch.home_team;
-        const awayTeamAirtableName = teamNameMapping[testMatch.away_team] || testMatch.away_team;
-        
-        const homeTeamId = teams[homeTeamAirtableName];
-        const awayTeamId = teams[awayTeamAirtableName];
-        
-        if (!homeTeamId || !awayTeamId) {
-            console.error('❌ Kan inte testa - saknar team IDs');
+        if (response.records && response.records.length > 0) {
+            const firstMatch = response.records[0];
+            console.log('✅ HITTADE BEFINTLIG MATCH:');
+            console.log('📊 Record ID:', firstMatch.id);
+            console.log('📋 Alla fält i Matches-tabellen:', Object.keys(firstMatch.fields));
+            console.log('📝 Fältdata:', JSON.stringify(firstMatch.fields, null, 2));
+            
+            return true;
+        } else {
+            console.log('📭 Inga matcher finns i Airtable Matches-tabellen ännu');
+            console.log('💡 Det här förklarar varför importen kan ha problem');
+            
+            // Testa att hämta schema istället
+            console.log('🔍 Försöker hämta tabellstruktur...');
+            const schemaResponse = await window.SHLImporter.airtableRequest(
+                `${window.SHLImporter.config.matchesTable}?maxRecords=0`
+            );
+            console.log('📋 Tabellsvar (utan records):', schemaResponse);
+            
             return false;
         }
         
-        const airtableMatch = {
-            fields: {
-                // match_id removed - det är ett computed field i Airtable
-                date: testMatch.date,
-                time: testMatch.time,
-                home_team: [homeTeamId],
-                away_team: [awayTeamId],
-                arena: testMatch.arena,
-                status: 'Scheduled',
-                round: parseInt(testMatch.round) || 1,
-                season: testMatch.season || '2024-2025'
-            }
-        };
-        
-        console.log('📤 Skickar test-match till Airtable:', airtableMatch);
-        
-        const response = await window.SHLImporter.airtableRequest(
-            window.SHLImporter.config.matchesTable, 
-            'POST', 
-            { records: [airtableMatch] }
-        );
-        
-        console.log('✅ TEST LYCKADES! Match skapad:', response);
-        return true;
-        
     } catch (error) {
-        console.error('❌ TEST MISSLYCKADES:', error);
+        console.error('❌ KUNDE INTE HÄMTA MATCHER:', error);
+        
+        // Om tabellen inte finns eller är tom, visa vad vi vet
+        console.log('🤔 Möjliga problem:');
+        console.log('  1. Matches-tabellen är helt tom');
+        console.log('  2. Fältnamnen är annorlunda än förväntat');
+        console.log('  3. Tabellnamnet är fel (borde vara "Matches")');
+        console.log('  4. API-behörigheter räcker inte till');
+        
         return false;
     }
 }
