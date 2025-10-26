@@ -86,6 +86,16 @@ app.get('/', (req, res) => {
     });
 });
 
+// Säker konfiguration för frontend (endast publika värden)
+app.get('/api/auth/config', (req, res) => {
+    // Endast säkra konfigurationsvärden som kan exponeras
+    res.json({
+        googleClientId: process.env.GOOGLE_CLIENT_ID,
+        // Lägg till andra publika config-värden här om behövs
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
 // Google OAuth Authentication
 app.post('/api/auth/google', async (req, res) => {
     const { idToken } = req.body;

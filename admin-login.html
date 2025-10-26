@@ -61,19 +61,9 @@
         </div>
 
         <div id="loginSection">
-            <!-- Google Sign-In -->
-            <div id="g_id_onload"
-                 data-client_id="YOUR_GOOGLE_CLIENT_ID"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin"
-                 data-type="standard"
-                 data-size="large"
-                 data-theme="outline"
-                 data-text="sign_in_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left">
+            <!-- Google Sign-In kommer att skapas dynamiskt via JavaScript -->
+            <div id="googleSignInContainer">
+                <!-- Placeholder för Google Sign-In knapp -->
             </div>
             
             <p style="margin-top: 1rem; color: var(--secondary-color); font-size: 0.9rem;">
@@ -95,6 +85,9 @@
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001' 
             : 'https://your-backend-domain.com'; // TODO: Uppdatera för produktion
+
+        // Global config som laddas från backend
+        let CONFIG = null;
 
         // Funktion för att avkoda JWT token
         function decodeJwtResponse(token) {
@@ -187,6 +180,76 @@
             }
         }
 
+        // Ladda säker konfiguration från backend
+        async function loadConfig() {
+            try {
+                console.log('🔧 Laddar säker konfiguration från backend...');
+                const response = await fetch(`${API_BASE_URL}/api/auth/config`);
+                
+                if (!response.ok) {
+                    throw new Error(`Config API fel: ${response.status}`);
+                }
+                
+                CONFIG = await response.json();
+                console.log('✅ Konfiguration laddad säkert från backend');
+                
+                // Nu kan vi säkert initiera Google Sign-In
+                initializeGoogleSignIn();
+                
+            } catch (error) {
+                console.error('❌ Fel vid laddning av konfiguration:', error);
+                showMessage('❌ Kunde inte ladda konfiguration från servern. Kontrollera att backend körs.', true);
+                showLoading(false);
+                throw error;
+            }
+        }
+
+        // Initiera Google Sign-In med säker config
+        function initializeGoogleSignIn() {
+            if (!CONFIG || !CONFIG.googleClientId) {
+                console.error('❌ Google Client ID saknas i konfiguration');
+                showMessage('❌ Google konfiguration saknas på servern.', true);
+                showLoading(false);
+                return;
+            }
+
+            console.log('🔐 Initierar Google Sign-In med säker Client ID...');
+            
+            // Skapa Google Sign-In element dynamiskt
+            const container = document.getElementById('googleSignInContainer');
+            
+            // Onload div
+            const onloadDiv = document.createElement('div');
+            onloadDiv.id = 'g_id_onload';
+            onloadDiv.setAttribute('data-client_id', CONFIG.googleClientId);
+            onloadDiv.setAttribute('data-callback', 'handleCredentialResponse');
+            onloadDiv.setAttribute('data-auto_prompt', 'false');
+            
+            // Sign-in button div
+            const signinDiv = document.createElement('div');
+            signinDiv.className = 'g_id_signin';
+            signinDiv.setAttribute('data-type', 'standard');
+            signinDiv.setAttribute('data-size', 'large');
+            signinDiv.setAttribute('data-theme', 'outline');
+            signinDiv.setAttribute('data-text', 'sign_in_with');
+            signinDiv.setAttribute('data-shape', 'rectangular');
+            signinDiv.setAttribute('data-logo_alignment', 'left');
+            
+            // Lägg till i container
+            container.appendChild(onloadDiv);
+            container.appendChild(signinDiv);
+            
+            // Info-text
+            const infoP = document.createElement('p');
+            infoP.style.marginTop = '1rem';
+            infoP.style.color = 'var(--secondary-color)';
+            infoP.style.fontSize = '0.9rem';
+            infoP.textContent = '🔐 Endast auktoriserade användare kan logga in';
+            container.appendChild(infoP);
+            
+            console.log('✅ Google Sign-In initierat säkert');
+        }
+
         // Kontrollera session när sidan laddas
         async function checkExistingSession() {
             try {
@@ -199,20 +262,35 @@
                 if (data.authenticated) {
                     console.log('✅ Befintlig session hittad:', data.user.email);
                     window.location.href = 'admin-panel.html';
+                    return true;
                 } else {
                     console.log('ℹ️ Ingen aktiv session');
-                    showLoading(false);
+                    return false;
                 }
             } catch (error) {
                 console.log('ℹ️ Kunde inte kontrollera session:', error.message);
-                showLoading(false);
+                return false;
             }
         }
 
-        // Initiera sidan
-        document.addEventListener('DOMContentLoaded', () => {
+        // Initiera sidan med säker konfigurationsladdning
+        document.addEventListener('DOMContentLoaded', async () => {
             showLoading(true);
-            checkExistingSession();
+            
+            try {
+                // Först: kontrollera om det redan finns en session
+                const hasSession = await checkExistingSession();
+                if (hasSession) return; // Redirectad till admin-panel
+                
+                // Sedan: ladda konfiguration och initiera Google Sign-In
+                await loadConfig();
+                
+                showLoading(false);
+                
+            } catch (error) {
+                console.error('❌ Fel vid initiering av sidan:', error);
+                showLoading(false);
+            }
         });
     </script>
 </body>
