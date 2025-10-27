@@ -785,53 +785,59 @@ class SHLSimulator {
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
             
-            // Debug-loggning
-            console.log(`🏒 Simulerar: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+            console.log(`🏒 ENKEL SIMULERING: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
             
-            // NYTT SYSTEM: Uppdatera match-data direkt och räkna om allt
-            const matchIndex = this.matches.findIndex(match => {
-                return match.home_team === homeTeam && match.away_team === awayTeam;
-            });
+            // ENKELT SYSTEM: Hitta lagen och uppdatera direkt
+            const homeStats = this.teamStats.find(team => team.name === homeTeam);
+            const awayStats = this.teamStats.find(team => team.name === awayTeam);
             
-            if (matchIndex !== -1) {
-                // Uppdatera match-objektet
-                this.matches[matchIndex].home_score = homeScore || 0;
-                this.matches[matchIndex].away_score = awayScore || 0;
-                this.matches[matchIndex].overtime = (resultType !== 'regular');
-                
-                console.log('✅ Match uppdaterad:', this.matches[matchIndex]);
+            if (!homeStats || !awayStats) {
+                console.error('❌ Lag ej hittat:', homeTeam, 'eller', awayTeam);
+                console.log('Tillgängliga lag:', this.teamStats.map(t => t.name));
+                return;
             }
             
-            // Räkna om ALLT från grunden
-            this.recalculateAllStats();
+            console.log(`📊 FÖRE: ${homeTeam}=${homeStats.points}p, ${awayTeam}=${awayStats.points}p`);
+            
+            // Enkla poängregler: vinnare får poäng
+            if (homeScore > awayScore) {
+                // Hemmalaget vinner
+                if (resultType === 'regular') {
+                    homeStats.points += 3;
+                    console.log(`🏆 ${homeTeam} vinner ordinarie - får +3p`);
+                } else {
+                    homeStats.points += 2;
+                    awayStats.points += 1;
+                    console.log(`🏆 ${homeTeam} vinner OT/SO - får +2p, ${awayTeam} får +1p`);
+                }
+            } else if (awayScore > homeScore) {
+                // Bortalaget vinner
+                if (resultType === 'regular') {
+                    awayStats.points += 3;
+                    console.log(`🏆 ${awayTeam} vinner ordinarie - får +3p`);
+                } else {
+                    awayStats.points += 2;
+                    homeStats.points += 1;
+                    console.log(`🏆 ${awayTeam} vinner OT/SO - får +2p, ${homeTeam} får +1p`);
+                }
+            }
+            
+            console.log(`📊 EFTER: ${homeTeam}=${homeStats.points}p, ${awayTeam}=${awayStats.points}p`);
             
             // Markera matchen som simulerad
             matchContainer.style.backgroundColor = '#f0f8f0';
             matchContainer.style.border = '1px solid #4CAF50';
             
             // Uppdatera tabellen direkt
-            console.log('📊 Anropar renderTable efter simulering...');
             this.renderTable();
-            console.log('✅ renderTable klar');
         } else {
-            // Ta bort simulering om scores rensas
-            const homeTeam = homeInput.dataset.team;
-            const awayTeam = awayInput.dataset.team;
+            // Ta bort simulering - ladda om originaldata
+            console.log('🔄 Rensar simulering - laddar om originaldata...');
             
-            const matchIndex = this.matches.findIndex(match => {
-                return match.home_team === homeTeam && match.away_team === awayTeam;
+            // Enkel lösning: ladda om teamStats från början
+            this.loadTeamStatsData().then(() => {
+                this.renderTable();
             });
-            
-            if (matchIndex !== -1) {
-                // Återställ match till original (inga scores)
-                this.matches[matchIndex].home_score = null;
-                this.matches[matchIndex].away_score = null;
-                this.matches[matchIndex].overtime = false;
-            }
-            
-            // Räkna om allt igen
-            this.recalculateAllStats();
-            this.renderTable();
             
             // Återställ matchens utseende
             matchContainer.style.backgroundColor = '';
