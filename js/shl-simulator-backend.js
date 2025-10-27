@@ -491,17 +491,32 @@ class SHLSimulator {
         
         const upcomingMatches = this.matches
             .filter(match => {
+                const matchDateStr = match.match_date || match.date || '';
+                const isFinished = match.finished === true || match.finished === 1 || match.finished === "true";
+                
+                // Debug för 2025-10-28 matcher
+                if (matchDateStr.includes('2025-10-28')) {
+                    console.log(`🎯 2025-10-28 match debug:`, {
+                        id: match.id,
+                        date: matchDateStr,
+                        finished: match.finished,
+                        isFinished: isFinished,
+                        homeTeam: match.homeTeamId,
+                        awayTeam: match.awayTeamId
+                    });
+                }
+                
                 // Använd "finished" från Airtable som är mer tillförlitligt
-                if (match.finished === true || match.finished === 1 || match.finished === "true") {
+                if (isFinished) {
                     console.log(`🏁 Match ${match.id} markerad som färdig i Airtable`);
                     return false;
                 }
                 
                 // Filtrera bort gamla matcher (före idag) - men behåll idag och framåt
-                const matchDate = new Date(match.match_date || match.date || '');
+                const matchDate = new Date(matchDateStr);
                 matchDate.setHours(0, 0, 0, 0);
                 if (matchDate < today) {
-                    console.log(`📅 Gammal match: ${match.id} från ${match.match_date}`);
+                    console.log(`📅 Gammal match: ${match.id} från ${matchDateStr}`);
                     return false;
                 }
                 
