@@ -21,11 +21,11 @@
 
 .simulator-layout {
     display: grid;
-    grid-template-columns: 1fr 2fr; /* Smalare matchlista, bredare tabell */
+    grid-template-columns: 1fr 3fr; /* Mycket smalare matchlista, mycket bredare tabell */
     gap: 2rem;
     margin-top: 2rem;
     align-items: start;
-    height: 950px; /* Högre för att visa alla 14 lag */
+    height: 1100px; /* Ännu högre för att säkert visa alla 14 lag */
 }
 
 /* Tabell-sektion */
@@ -34,7 +34,7 @@
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    height: 950px; /* Högre för att visa alla 14 lag */
+    height: 1100px; /* Ännu högre för att säkert visa alla 14 lag */
     display: flex;
     flex-direction: column;
 }
@@ -111,7 +111,7 @@
     border-radius: 0.75rem;
     padding: 1.5rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    height: 950px; /* Högre för att matcha tabellsektionen */
+    height: 1100px; /* Högre för att matcha tabellsektionen */
     display: flex;
     flex-direction: column;
 }

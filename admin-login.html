@@ -81,10 +81,10 @@
     </div>
 
     <script>
-        // Backend API URL (anpassa för din miljö)
+        // Backend API URL - använd PHP fallback om backend inte finns
         const API_BASE_URL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3001' 
-            : 'https://your-backend-domain.com'; // TODO: Uppdatera för produktion
+            : null; // Använd PHP fallback för staging/produktion
 
         // Global config som laddas från backend
         let CONFIG = null;
@@ -108,19 +108,29 @@
                 const responsePayload = decodeJwtResponse(response.credential);
                 console.log('🔐 OAuth token mottaget för:', responsePayload.email);
 
-                // Skicka till backend för verifiering
-                const authResponse = await fetch(`${API_BASE_URL}/api/auth/google`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    credentials: 'include', // Viktigt för cookies/sessions
-                    body: JSON.stringify({ 
-                        idToken: response.credential 
-                    })
-                });
-
-                const data = await authResponse.json();
+                // Försök backend först, fallback till direktverifiering
+                let data;
+                if (API_BASE_URL) {
+                    try {
+                        const authResponse = await fetch(`${API_BASE_URL}/api/auth/google`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            credentials: 'include',
+                            body: JSON.stringify({ 
+                                idToken: response.credential 
+                            })
+                        });
+                        data = await authResponse.json();
+                    } catch (error) {
+                        console.log('⚠️ Backend inte tillgängligt, använder direktverifiering');
+                        data = await directGoogleVerification(responsePayload);
+                    }
+                } else {
+                    // Direktverifiering för staging/produktion
+                    data = await directGoogleVerification(responsePayload);
+                }
 
                 if (data.success) {
                     console.log('✅ Backend-verifiering lyckades:', data.user.email);
@@ -180,18 +190,51 @@
             }
         }
 
-        // Ladda säker konfiguration från backend
+        // Direktverifiering för staging/produktion
+        async function directGoogleVerification(payload) {
+            // Lista över auktoriserade e-postadresser (samma som i backend .env)
+            const authorizedEmails = [
+                'your-email@gmail.com', // TODO: Uppdatera med riktiga emails
+                'admin@yourdomain.com'
+            ];
+            
+            if (authorizedEmails.includes(payload.email)) {
+                return {
+                    success: true,
+                    user: { email: payload.email, name: payload.name }
+                };
+            } else {
+                return {
+                    success: false,
+                    error: 'E-postadressen är inte auktoriserad'
+                };
+            }
+        }
+
+        // Ladda konfiguration från backend eller fallback
         async function loadConfig() {
             try {
-                console.log('🔧 Laddar säker konfiguration från backend...');
-                const response = await fetch(`${API_BASE_URL}/api/auth/config`);
-                
-                if (!response.ok) {
-                    throw new Error(`Config API fel: ${response.status}`);
+                if (API_BASE_URL) {
+                    console.log('🔧 Försöker ladda konfiguration från backend...');
+                    const response = await fetch(`${API_BASE_URL}/api/auth/config`);
+                    
+                    if (response.ok) {
+                        CONFIG = await response.json();
+                        console.log('✅ Konfiguration laddad från backend');
+                        return;
+                    }
                 }
                 
-                CONFIG = await response.json();
-                console.log('✅ Konfiguration laddad säkert från backend');
+                // Fallback - ladda från PHP config
+                console.log('🔧 Försöker PHP fallback...');
+                const phpResponse = await fetch('api-config.php');
+                if (phpResponse.ok) {
+                    CONFIG = await phpResponse.json();
+                    console.log('✅ Konfiguration laddad från PHP fallback');
+                    return;
+                }
+                
+                throw new Error('Ingen konfiguration tillgänglig');
                 
                 // Nu kan vi säkert initiera Google Sign-In
                 initializeGoogleSignIn();

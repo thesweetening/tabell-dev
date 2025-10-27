@@ -478,27 +478,40 @@ class SHLSimulator {
         
         console.log('🏒 Renderar matcher:', this.matches.length, 'totalt');
 
-        // Filtrera matcher som inte är färdiga OCH som är framtida/idag
+        // Filtrera matcher som inte är färdiga enligt "finished" fältet från Airtable
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Sätt till början av dagen
         
         const upcomingMatches = this.matches
             .filter(match => {
-                // Filtrera bort färdiga matcher
-                if (match.finished || (match.homeScore !== null && match.awayScore !== null)) {
+                // Använd "finished" från Airtable som är mer tillförlitligt
+                if (match.finished === true || match.finished === 1 || match.finished === "true") {
+                    console.log(`🏁 Match ${match.id} markerad som färdig i Airtable`);
                     return false;
                 }
                 
-                // Filtrera bort gamla matcher (före idag)
+                // Filtrera bort gamla matcher (före idag) - men behåll idag och framåt
                 const matchDate = new Date(match.match_date || match.date || '');
                 matchDate.setHours(0, 0, 0, 0);
-                return matchDate >= today;
+                if (matchDate < today) {
+                    console.log(`📅 Gammal match: ${match.id} från ${match.match_date}`);
+                    return false;
+                }
+                
+                return true;
             })
             .sort((a, b) => {
                 const dateA = new Date(a.match_date || a.date || '');
                 const dateB = new Date(b.match_date || b.date || '');
                 return dateA - dateB; // Sortera från tidigast till senast
             });
+        
+        console.log(`🏒 Hittade ${upcomingMatches.length} ej färdiga matcher att visa`);
+        console.log('Matcher per datum:', upcomingMatches.reduce((acc, match) => {
+            const date = match.match_date || match.date;
+            acc[date] = (acc[date] || 0) + 1;
+            return acc;
+        }, {}));
 
         if (upcomingMatches.length === 0) {
             matchesContainer.innerHTML = '<p class="no-matches">Inga kommande matcher att simulera.</p>';
