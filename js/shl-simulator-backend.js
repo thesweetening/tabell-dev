@@ -785,7 +785,19 @@ class SHLSimulator {
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
             
+            // KRITISK FIX: Kontrollera om denna match redan är simulerad
+            const matchKey = `${homeTeam}-${awayTeam}`;
+            if (this.simulatedMatches && this.simulatedMatches.has(matchKey)) {
+                console.log('⚠️ Match redan simulerad, hoppar över...');
+                return;
+            }
+            
             console.log(`🏒 ENKEL SIMULERING: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+            
+            // Initiera simulatedMatches om det inte finns
+            if (!this.simulatedMatches) {
+                this.simulatedMatches = new Set();
+            }
             
             // ENKELT SYSTEM: Hitta lagen och uppdatera direkt
             const homeStats = this.teamStats.find(team => team.name === homeTeam);
@@ -822,6 +834,9 @@ class SHLSimulator {
                 }
             }
             
+            // Markera som simulerad
+            this.simulatedMatches.add(matchKey);
+            
             console.log(`📊 EFTER: ${homeTeam}=${homeStats.points}p, ${awayTeam}=${awayStats.points}p`);
             
             // Markera matchen som simulerad
@@ -831,8 +846,17 @@ class SHLSimulator {
             // Uppdatera tabellen direkt
             this.renderTable();
         } else {
-            // Ta bort simulering - ladda om originaldata
-            console.log('🔄 Rensar simulering - laddar om originaldata...');
+            // Ta bort simulering
+            const homeTeam = homeInput.dataset.team;
+            const awayTeam = awayInput.dataset.team;
+            const matchKey = `${homeTeam}-${awayTeam}`;
+            
+            console.log('🔄 Rensar simulering för:', matchKey);
+            
+            // Ta bort från simulerade matcher
+            if (this.simulatedMatches) {
+                this.simulatedMatches.delete(matchKey);
+            }
             
             // Enkel lösning: ladda om teamStats från början
             this.loadTeamStatsData().then(() => {
