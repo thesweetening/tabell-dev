@@ -768,8 +768,15 @@ class SHLSimulator {
             return;
         }
 
-        const homeScore = homeInput.value ? parseInt(homeInput.value) : null;
-        const awayScore = awayInput.value ? parseInt(awayInput.value) : null;
+        const homeScore = homeInput.value !== '' ? parseInt(homeInput.value) : null;
+        const awayScore = awayInput.value !== '' ? parseInt(awayInput.value) : null;
+        
+        console.log('🔍 SCORE DEBUG:', {
+            homeInput_value: homeInput.value,
+            awayInput_value: awayInput.value,
+            homeScore_parsed: homeScore,
+            awayScore_parsed: awayScore
+        });
         
         console.log('📊 Input-värden:', {
             matchId,
@@ -779,8 +786,8 @@ class SHLSimulator {
             awayScore
         });
         
-        // Uppdatera om minst ett score är ifyllt
-        if (homeScore !== null || awayScore !== null) {
+        // Uppdatera endast om BÅDA scores är ifyllda
+        if (homeScore !== null && awayScore !== null) {
             const resultType = resultSelect ? resultSelect.value : 'regular';
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
