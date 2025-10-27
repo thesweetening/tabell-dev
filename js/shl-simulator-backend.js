@@ -943,16 +943,29 @@ class SHLSimulator {
     
     // Hjälpfunktion: Lägg till EN match till statistiken
     addMatchToStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
+        console.log(`🔍 addMatchToStats anropad med:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
+        console.log(`📋 Söker efter "${homeTeam}" och "${awayTeam}" bland:`, this.teamStats.map(t => `"${t.name}"`));
+        
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
         const awayStats = this.teamStats.find(team => team.name === awayTeam);
         
+        if (!homeStats) {
+            console.error(`❌ HEMMALAG "${homeTeam}" HITTAS EJ!`);
+            console.error('Tillgängliga lagnamn:', this.teamStats.map(t => `"${t.name}"`));
+        }
+        if (!awayStats) {
+            console.error(`❌ BORTALAG "${awayTeam}" HITTAS EJ!`);
+            console.error('Tillgängliga lagnamn:', this.teamStats.map(t => `"${t.name}"`));
+        }
+        
         if (!homeStats || !awayStats) {
-            console.warn('⚠️ Lag ej hittat för match:', homeTeam, 'vs', awayTeam);
-            console.warn('Tillgängliga lag:', this.teamStats.map(t => t.name));
             return;
         }
         
-        console.log(`📈 Adderar stats: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+        console.log(`✅ Hittat båda lagen:`, {
+            home: {name: homeStats.name, points_before: homeStats.points},
+            away: {name: awayStats.name, points_before: awayStats.points}
+        });
         
         // Uppdatera matcher spelade
         homeStats.games += 1;
@@ -969,16 +982,21 @@ class SHLSimulator {
         awayStats.goal_difference = awayStats.goals_for - awayStats.goals_against;
         
         // Bestäm vinnare och uppdatera vinster/förluster samt poäng
+        console.log(`⚽ Match resultat: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`);
+        
         if (homeScore > awayScore) {
             // Hemmalaget vinner
+            console.log(`🏆 ${homeTeam} VINNER!`);
             if (resultType === 'regular') {
                 // Ordinarie tid: 3-0 poäng
+                console.log(`📊 Ordinarie vinst - ${homeTeam} får +3p, ${awayTeam} får 0p`);
                 homeStats.wins += 1;
                 homeStats.points += 3;
                 awayStats.losses += 1;
                 // awayStats.points += 0 (ingen förändring)
             } else {
                 // Övertid/Straffar: 2-1 poäng
+                console.log(`📊 Övertidsvinst - ${homeTeam} får +2p, ${awayTeam} får +1p`);
                 homeStats.overtime_wins += 1;
                 homeStats.points += 2;
                 awayStats.overtime_losses += 1;
@@ -986,20 +1004,29 @@ class SHLSimulator {
             }
         } else if (awayScore > homeScore) {
             // Bortalaget vinner
+            console.log(`🏆 ${awayTeam} VINNER!`);
             if (resultType === 'regular') {
                 // Ordinarie tid: 0-3 poäng
+                console.log(`📊 Ordinarie vinst - ${awayTeam} får +3p, ${homeTeam} får 0p`);
                 awayStats.wins += 1;
                 awayStats.points += 3;
                 homeStats.losses += 1;
                 // homeStats.points += 0 (ingen förändring)
             } else {
                 // Övertid/Straffar: 1-2 poäng
+                console.log(`📊 Övertidsvinst - ${awayTeam} får +2p, ${homeTeam} får +1p`);
                 awayStats.overtime_wins += 1;
                 awayStats.points += 2;
                 homeStats.overtime_losses += 1;
                 homeStats.points += 1;
             }
         }
+        
+        console.log(`✅ SLUTRESULTAT efter match:`, {
+            home: {name: homeStats.name, points_after: homeStats.points, wins: homeStats.wins},
+            away: {name: awayStats.name, points_after: awayStats.points, wins: awayStats.wins}
+        });
+        
         // Oavgjort ska inte kunna hända i hockey, men vi hanterar det inte
     }
     
