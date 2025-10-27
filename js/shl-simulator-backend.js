@@ -908,10 +908,24 @@ class SHLSimulator {
         });
         
         // 2. Gå igenom ALLA matcher (både riktiga och simulerade)
-        const matchesWithResults = this.matches.filter(match => 
-            (match.home_score !== null && match.home_score !== undefined) || 
-            (match.away_score !== null && match.away_score !== undefined)
-        );
+        console.log('🔍 DEBUG: Alla matches innan filtrering:', this.matches.length);
+        console.log('🔍 DEBUG: Första 3 matcher:', this.matches.slice(0, 3).map(m => ({
+            home: m.home_team, 
+            away: m.away_team, 
+            home_score: m.home_score, 
+            away_score: m.away_score
+        })));
+        
+        const matchesWithResults = this.matches.filter(match => {
+            const hasResult = (match.home_score !== null && match.home_score !== undefined) || 
+                             (match.away_score !== null && match.away_score !== undefined);
+            
+            if (hasResult) {
+                console.log(`✅ Match med resultat: ${match.home_team} ${match.home_score}-${match.away_score} ${match.away_team}`);
+            }
+            
+            return hasResult;
+        });
         
         console.log(`🏒 Processar ${matchesWithResults.length} matcher med resultat av ${this.matches.length} totalt`);
         
