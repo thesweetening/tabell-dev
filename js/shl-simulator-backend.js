@@ -632,8 +632,10 @@ class SHLSimulator {
         const roundsArray = Array.from(matchesByRound.entries());
         const roundsToShow = roundsLimit === 'all' ? roundsArray : roundsArray.slice(0, parseInt(roundsLimit) || 1);
         
-        // Generera HTML för matcher med omgång-headers
-        const matchesHTML = roundsToShow.map(([date, matches]) => {
+        // Generera HTML för matcher med omgång-headers  
+        const totalMatches = roundsToShow.reduce((sum, [date, matches]) => sum + matches.length, 0);
+        const matchesHTML = roundsToShow.map(([date, matches], index) => {
+            const roundNumber = index + 1;
             const roundHeader = '<div class="round-header" style="background: #d32f2f; color: white; padding: 8px 12px; margin: 15px 0 10px 0; border-radius: 6px; font-weight: bold; text-align: center;">📅 Omgång ' + this.formatDate(date) + ' (' + matches.length + ' matcher)</div>';
             
             const matchCards = matches.map(match => {
@@ -646,13 +648,13 @@ class SHLSimulator {
                 return '<div class="match-item" data-match-id="' + match.id + '" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #333;">' +
                     '<div class="match-teams" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">' +
                         '<div class="team home-team" style="display: flex; align-items: center; flex: 1;">' +
-                            '<span class="team-name" style="font-weight: bold; color: #333; margin-right: 8px; min-width: 80px; text-align: right;">' + homeTeamName + '</span>' +
+                            '<span class="team-name" style="font-weight: bold; color: #333; margin-right: 6px; min-width: 70px; text-align: right; font-size: 0.85rem;">' + homeTeamName + '</span>' +
                             '<input type="number" class="score-input home-score" min="0" max="20" placeholder="0" value="' + (simResult ? simResult.homeScore : '') + '" data-match-id="' + match.id + '" data-team-type="home" data-team="' + homeTeamName + '" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333;">' +
                         '</div>' +
                         '<div class="vs" style="margin: 0 10px; font-weight: bold; color: #666;">-</div>' +
                         '<div class="team away-team" style="display: flex; align-items: center; flex: 1;">' +
                             '<input type="number" class="score-input away-score" min="0" max="20" placeholder="0" value="' + (simResult ? simResult.awayScore : '') + '" data-match-id="' + match.id + '" data-team-type="away" data-team="' + awayTeamName + '" style="width: 50px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px; color: #333; margin-right: 8px;">' +
-                            '<span class="team-name" style="font-weight: bold; color: #333; min-width: 80px; text-align: left;">' + awayTeamName + '</span>' +
+                            '<span class="team-name" style="font-weight: bold; color: #333; min-width: 70px; text-align: left; font-size: 0.85rem;">' + awayTeamName + '</span>' +
                         '</div>' +
                     '</div>' +
                     '<div class="match-options" style="text-align: center;">' +
@@ -790,9 +792,15 @@ class SHLSimulator {
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
         const awayStats = this.teamStats.find(team => team.name === awayTeam);
         
+        if (!homeStats) {
+            console.error('❌ Hemmalag ej hittat:', homeTeam);
+            console.error('Tillgängliga lagnamn:', this.teamStats.map(t => t.name));
+        }
+        if (!awayStats) {
+            console.error('❌ Bortalag ej hittat:', awayTeam);  
+        }
+        
         if (!homeStats || !awayStats) {
-            console.error('❌ Team stats not found:', {homeTeam, awayTeam});
-            console.error('Available teams:', this.teamStats.map(t => t.name));
             return;
         }
         

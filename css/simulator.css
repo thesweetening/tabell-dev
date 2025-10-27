@@ -21,7 +21,7 @@
 
 .simulator-layout {
     display: grid;
-    grid-template-columns: 1fr 250px; /* SHL-tabell tar resten (lila), matchlista fast bredd 250px (gul) */
+    grid-template-columns: 1fr 320px; /* SHL-tabell tar resten (lila), matchlista 320px för att få plats med text */
     gap: 2rem;
     margin-top: 2rem;
     align-items: start;
