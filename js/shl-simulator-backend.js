@@ -371,12 +371,28 @@ class SHLSimulator {
 
             // Spara ORIGINAL team stats för återställning
             this.originalTeamStats = response.data.map(record => {
+                console.log('🔍 RAW Team_Stats record för name-mapping:', record.fields);
+                
+                // Försök olika sätt att få lagnamnet
+                let teamName = 'Okänt lag';
+                if (record.fields["name (from Teams)"]) {
+                    if (Array.isArray(record.fields["name (from Teams)"])) {
+                        teamName = record.fields["name (from Teams)"][0];
+                    } else {
+                        teamName = record.fields["name (from Teams)"];
+                    }
+                } else if (record.fields.name) {
+                    teamName = record.fields.name;
+                } else if (record.fields.Team) {
+                    teamName = record.fields.Team;
+                }
+                
+                console.log('🏒 Mappat lagnamn:', teamName, 'från record:', record.id);
+                
                 return {
                     id: record.id,
                     teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
-                    name: record.fields["name (from Teams)"] && Array.isArray(record.fields["name (from Teams)"]) 
-                        ? record.fields["name (from Teams)"][0] 
-                        : record.fields["name (from Teams)"] || record.fields.name || 'Okänt lag',
+                    name: teamName,
                     games: record.fields["games"] || 0,
                     wins: record.fields["wins"] || 0,
                     overtime_wins: record.fields["overtime_wins"] || 0,
