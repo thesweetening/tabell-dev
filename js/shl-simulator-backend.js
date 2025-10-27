@@ -447,6 +447,8 @@ class SHLSimulator {
     }
 
     renderTable() {
+        console.log('🎯 renderTable() ANROPAD - börjar rendera tabell');
+        
         const tableContainer = document.getElementById('standings-table');
         if (!tableContainer) {
             console.error('❌ Kunde inte hitta standings-table element');
@@ -637,8 +639,8 @@ class SHLSimulator {
             const matchCards = matches.map(match => {
                 const homeTeam = this.teams.find(t => t.id === match.homeTeamId);
                 const awayTeam = this.teams.find(t => t.id === match.awayTeamId);
-                const homeTeamName = homeTeam ? homeTeam.name : 'Okänt lag';
-                const awayTeamName = awayTeam ? awayTeam.name : 'Okänt lag';
+                const homeTeamName = homeTeam ? (homeTeam.name || homeTeam.Lag || homeTeam["name (from Teams)"]) : 'Okänt lag';
+                const awayTeamName = awayTeam ? (awayTeam.name || awayTeam.Lag || awayTeam["name (from Teams)"]) : 'Okänt lag';
                 const simResult = this.simulatedResults.get(match.id);
                 
                 return '<div class="match-item" data-match-id="' + match.id + '" style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; color: #333;">' +
@@ -779,13 +781,21 @@ class SHLSimulator {
 
 
     updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
+        console.log(`🔍 updateTeamStats called with:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
+        
+        // Debug alla lagnamn
+        console.log('📋 Alla lagnamn i teamStats:', this.teamStats.map(t => t.name));
+        
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
         const awayStats = this.teamStats.find(team => team.name === awayTeam);
         
         if (!homeStats || !awayStats) {
-            console.error('Team stats not found:', homeTeam, awayTeam);
+            console.error('❌ Team stats not found:', {homeTeam, awayTeam});
+            console.error('Available teams:', this.teamStats.map(t => t.name));
             return;
         }
+        
+        console.log('✅ Hittat båda lagen:', homeStats.name, 'vs', awayStats.name);
         
         // Uppdatera matcher spelade
         homeStats.GP = (homeStats.GP || 0) + 1;

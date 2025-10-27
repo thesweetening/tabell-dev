@@ -21,7 +21,7 @@
 
 .simulator-layout {
     display: grid;
-    grid-template-columns: 1fr 4fr; /* Ännu smalare matchlista, ännu bredare tabell */
+    grid-template-columns: 1fr 5fr; /* Matchlista mycket smal, tabell mycket bred enligt färgmarkering */
     gap: 2rem;
     margin-top: 2rem;
     align-items: start;
