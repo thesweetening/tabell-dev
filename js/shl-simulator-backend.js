@@ -201,26 +201,75 @@ class SHLSimulator {
             return this.getDemoData(endpoint);
         }
         
-        // Om vi har giltig localStorage-config, försök direktaccess
+        // Försök PHP-fallback först
+        if (endpoint === 'matches') {
+            try {
+                console.log('🔄 Försöker PHP-fallback för matches...');
+                const response = await fetch('api-matches.php');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success) {
+                        console.log(`✅ PHP-fallback: ${data.total} matcher hämtade`);
+                        return { data: data.data };
+                    }
+                }
+            } catch (error) {
+                console.log('⚠️ PHP-fallback misslyckades, försöker direktaccess');
+            }
+        }
+        
+        // Om vi har giltig localStorage-config, försök direktaccess med paginering
         if (this.CONFIG?.airtable?.apiKey && this.CONFIG?.airtable?.baseId) {
             const table = this.getTableForEndpoint(endpoint);
-            const url = `https://api.airtable.com/v0/${this.CONFIG.airtable.baseId}/${table}`;
             
             try {
-                const response = await fetch(url, {
-                    headers: {
-                        'Authorization': `Bearer ${this.CONFIG.airtable.apiKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    ...options
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Airtable API fel: ${response.status}`);
+                // För matches, hämta alla med paginering
+                if (endpoint === 'matches') {
+                    let allRecords = [];
+                    let offset = '';
+                    
+                    do {
+                        const url = `https://api.airtable.com/v0/${this.CONFIG.airtable.baseId}/${table}?sort%5B0%5D%5Bfield%5D=match_date&sort%5B0%5D%5Bdirection%5D=asc&maxRecords=100${offset ? '&offset=' + offset : ''}`;
+                        
+                        const response = await fetch(url, {
+                            headers: {
+                                'Authorization': `Bearer ${this.CONFIG.airtable.apiKey}`,
+                                'Content-Type': 'application/json'
+                            }
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`Airtable API fel: ${response.status}`);
+                        }
+                        
+                        const data = await response.json();
+                        allRecords = allRecords.concat(data.records);
+                        offset = data.offset;
+                        
+                        console.log(`📄 Batch: ${allRecords.length} matcher hämtade så långt...`);
+                    } while (offset);
+                    
+                    console.log(`✅ Direktaccess: Totalt ${allRecords.length} matcher`);
+                    return { data: allRecords };
+                } else {
+                    // För andra endpoints, vanlig single request
+                    const url = `https://api.airtable.com/v0/${this.CONFIG.airtable.baseId}/${table}`;
+                    
+                    const response = await fetch(url, {
+                        headers: {
+                            'Authorization': `Bearer ${this.CONFIG.airtable.apiKey}`,
+                            'Content-Type': 'application/json'
+                        },
+                        ...options
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Airtable API fel: ${response.status}`);
+                    }
+                    
+                    const data = await response.json();
+                    return { data: data.records };
                 }
-                
-                const data = await response.json();
-                return { data: data.records };
                 
             } catch (error) {
                 console.error('Direktaccess fel, använder demo-data:', error);

@@ -228,11 +228,25 @@ app.get('/api/matches', requireAuth, async (req, res) => {
     try {
         console.log('🎯 Hämtar Matches data...');
         
-        // Hämta kommande matcher (efter dagens datum)
-        const today = new Date().toISOString().split('T')[0];
-        const endpoint = `Matches?filterByFormula=IS_AFTER(match_date%2C'${today}')&sort%5B0%5D%5Bfield%5D=match_date&sort%5B0%5D%5Bdirection%5D=asc&maxRecords=50`;
+        // Hämta ALLA matcher från Matches-tabellen med paginering för att få alla 289 records
+        let allRecords = [];
+        let offset = '';
         
-        const data = await airtableRequest(endpoint);
+        do {
+            const endpoint = `Matches?sort%5B0%5D%5Bfield%5D=match_date&sort%5B0%5D%5Bdirection%5D=asc&maxRecords=100${offset ? '&offset=' + offset : ''}`;
+            console.log(`📄 Hämtar batch från: ${endpoint}`);
+            const batchData = await airtableRequest(endpoint);
+            
+            allRecords = allRecords.concat(batchData.records);
+            offset = batchData.offset;
+            
+            console.log(`📊 Hämtat ${allRecords.length} av totalt ~289 matches...`);
+        } while (offset);
+        
+        console.log(`✅ Hämtade totalt ${allRecords.length} matcher från Matches-tabellen`);
+        
+        const data = { records: allRecords };
+        
         res.json({
             success: true,
             data: data.records
