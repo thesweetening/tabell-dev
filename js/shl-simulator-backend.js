@@ -783,8 +783,9 @@ class SHLSimulator {
     updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
         console.log(`🔍 updateTeamStats called with:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
         
-        // Debug alla lagnamn
-        console.log('📋 Alla lagnamn i teamStats:', this.teamStats.map(t => t.name));
+        // Debug alla lagnamn från båda källor
+        console.log('📋 Alla lagnamn i teamStats:', this.teamStats.map(t => ({id: t.teamId, name: t.name})));
+        console.log('🏒 Söker efter lag:', {homeTeam, awayTeam});
         
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
         const awayStats = this.teamStats.find(team => team.name === awayTeam);
