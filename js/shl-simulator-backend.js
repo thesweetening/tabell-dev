@@ -369,6 +369,10 @@ class SHLSimulator {
                 return {
                     id: record.id,
                     teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
+                    // KRITISKT: Lägg till name-fält!
+                    name: record.fields["name (from Teams)"] && Array.isArray(record.fields["name (from Teams)"]) 
+                        ? record.fields["name (from Teams)"][0] 
+                        : record.fields["name (from Teams)"] || record.fields.name || 'Okänt lag',
                     // Använd bracket notation för ALLA fält för konsistens
                     games: record.fields["games"],
                     wins: record.fields["wins"],
