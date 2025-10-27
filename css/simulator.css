@@ -21,7 +21,7 @@
 
 .simulator-layout {
     display: grid;
-    grid-template-columns: 250px 1fr; /* Matchlista fast bredd 250px (gul), tabell tar resten (lila) */
+    grid-template-columns: 1fr 250px; /* SHL-tabell tar resten (lila), matchlista fast bredd 250px (gul) */
     gap: 2rem;
     margin-top: 2rem;
     align-items: start;
