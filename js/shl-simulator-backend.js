@@ -371,6 +371,7 @@ class SHLSimulator {
         
         try {
             const response = await this.apiRequest('matches');
+            console.log('📥 Rå matcher-data från Airtable:', response.data?.length, 'records');
             
             this.matches = response.data.map(record => ({
                 id: record.id,
@@ -383,7 +384,13 @@ class SHLSimulator {
                 ...record.fields
             }));
 
-            console.log(`✅ Laddade ${this.matches.length} matcher`);
+            console.log(`✅ Laddade ${this.matches.length} matcher från Matches-tabell`);
+            console.log('🔍 Exempel matcher:', this.matches.slice(0, 3).map(m => ({
+                id: m.id,
+                date: m.match_date || m.date,
+                finished: m.finished,
+                teams: `${m.homeTeamId} vs ${m.awayTeamId}`
+            })));
         } catch (error) {
             console.error('❌ Fel vid laddning av matcher:', error);
             throw new Error('Kunde inte ladda matcher: ' + error.message);
@@ -507,11 +514,16 @@ class SHLSimulator {
             });
         
         console.log(`🏒 Hittade ${upcomingMatches.length} ej färdiga matcher att visa`);
-        console.log('Matcher per datum:', upcomingMatches.reduce((acc, match) => {
+        const matchesByDateDebug = upcomingMatches.reduce((acc, match) => {
             const date = match.match_date || match.date;
             acc[date] = (acc[date] || 0) + 1;
             return acc;
-        }, {}));
+        }, {});
+        console.log('📅 Matcher per datum:', matchesByDateDebug);
+        
+        // Debug specifikt för 28 oktober
+        const oct28Matches = upcomingMatches.filter(m => (m.match_date || m.date || '').includes('2025-10-28'));
+        console.log(`🎯 Matcher 2025-10-28: ${oct28Matches.length} st`, oct28Matches.map(m => `${m.id}: ${m.homeTeamId} vs ${m.awayTeamId}`));
 
         if (upcomingMatches.length === 0) {
             matchesContainer.innerHTML = '<p class="no-matches">Inga kommande matcher att simulera.</p>';
@@ -524,8 +536,8 @@ class SHLSimulator {
                 <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333;">
                     Antal omgångar att visa:
                     <select id="rounds-limit" style="margin-left: 10px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; color: #333;">
-                        <option value="1" selected>1 omgång</option>
-                        <option value="3">3 omgångar</option>
+                        <option value="1">1 omgång</option>
+                        <option value="3" selected>3 omgångar</option>
                         <option value="5">5 omgångar</option>
                         <option value="all">Alla omgångar</option>
                     </select>
@@ -642,11 +654,11 @@ class SHLSimulator {
         
         if (!homeInput || !awayInput) return;
 
-        const homeScore = parseInt(homeInput.value) || 0;
-        const awayScore = parseInt(awayInput.value) || 0;
+        const homeScore = homeInput.value ? parseInt(homeInput.value) : null;
+        const awayScore = awayInput.value ? parseInt(awayInput.value) : null;
         
-        // Uppdatera även om bara ett score är ifyllt
-        if (homeScore >= 0 || awayScore >= 0) {
+        // Uppdatera om minst ett score är ifyllt
+        if (homeScore !== null || awayScore !== null) {
             const resultType = resultSelect ? resultSelect.value : 'regular';
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
@@ -662,17 +674,19 @@ class SHLSimulator {
             
             // Debug-loggning
             console.log(`🏒 Simulerar: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+            console.log(`📊 Före updateTeamStats - antal teamStats:`, this.teamStats.length);
             
             // Uppdatera statistik
-            this.updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
+            this.updateTeamStats(homeTeam, awayTeam, homeScore || 0, awayScore || 0, resultType);
             
             // Markera matchen som simulerad
             matchContainer.style.backgroundColor = '#f0f8f0';
             matchContainer.style.border = '1px solid #4CAF50';
             
             // Uppdatera tabellen direkt
-            console.log('📊 Uppdaterar tabell efter simulering...');
+            console.log('📊 Anropar renderTable efter simulering...');
             this.renderTable();
+            console.log('✅ renderTable klar');
         } else {
             // Ta bort simulering om scores rensas
             if (this.simulatedResults.has(matchId)) {
