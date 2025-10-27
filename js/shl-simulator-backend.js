@@ -820,7 +820,6 @@ class SHLSimulator {
             // Återställ matchens utseende
             matchContainer.style.backgroundColor = '';
             matchContainer.style.border = '';
-            }
         }
     }
 
