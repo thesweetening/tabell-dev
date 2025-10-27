@@ -364,29 +364,29 @@ class SHLSimulator {
                 console.log('🔍 Debug - Fält i första posten:', response.data[0].fields);
             }
 
-            this.teamStats = response.data.map(record => {
-                console.log('🔍 Mapping record:', record.id, 'fields:', Object.keys(record.fields));
+            // Spara ORIGINAL team stats för återställning
+            this.originalTeamStats = response.data.map(record => {
                 return {
                     id: record.id,
                     teamId: Array.isArray(record.fields.Teams) ? record.fields.Teams[0] : record.fields.Teams,
-                    // KRITISKT: Lägg till name-fält!
                     name: record.fields["name (from Teams)"] && Array.isArray(record.fields["name (from Teams)"]) 
                         ? record.fields["name (from Teams)"][0] 
                         : record.fields["name (from Teams)"] || record.fields.name || 'Okänt lag',
-                    // Använd bracket notation för ALLA fält för konsistens
-                    games: record.fields["games"],
-                    wins: record.fields["wins"],
-                    overtime_wins: record.fields["overtime_wins"],
-                    losses: record.fields["losses"],
-                    overtime_losses: record.fields["overtime_losses"],
-                    goals_for: record.fields["goals_for"],
-                    goals_against: record.fields["goals_against"],
-                    goal_difference: record.fields["goal_difference"],
-                    points: record.fields["points"],
-                    season: record.fields["season"],
-                    ...record.fields
+                    games: record.fields["games"] || 0,
+                    wins: record.fields["wins"] || 0,
+                    overtime_wins: record.fields["overtime_wins"] || 0,
+                    losses: record.fields["losses"] || 0,
+                    overtime_losses: record.fields["overtime_losses"] || 0,
+                    goals_for: record.fields["goals_for"] || 0,
+                    goals_against: record.fields["goals_against"] || 0,
+                    goal_difference: record.fields["goal_difference"] || 0,
+                    points: record.fields["points"] || 0,
+                    season: record.fields["season"]
                 };
             });
+            
+            // Kopiera för working copy
+            this.teamStats = JSON.parse(JSON.stringify(this.originalTeamStats));
 
             // Debug: Hitta och logga Frölundas specifika rådata
             const frolandaRaw = response.data.find(record => {
@@ -758,21 +758,25 @@ class SHLSimulator {
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
             
-            // Spara simulerat resultat
-            this.simulatedResults.set(matchId, {
-                homeScore: homeScore,
-                awayScore: awayScore,
-                resultType: resultType,
-                homeTeam: homeTeam,
-                awayTeam: awayTeam
-            });
-            
             // Debug-loggning
             console.log(`🏒 Simulerar: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
-            console.log(`📊 Före updateTeamStats - antal teamStats:`, this.teamStats.length);
             
-            // Uppdatera statistik
-            this.updateTeamStats(homeTeam, awayTeam, homeScore || 0, awayScore || 0, resultType);
+            // NYTT SYSTEM: Uppdatera match-data direkt och räkna om allt
+            const matchIndex = this.matches.findIndex(match => {
+                return match.home_team === homeTeam && match.away_team === awayTeam;
+            });
+            
+            if (matchIndex !== -1) {
+                // Uppdatera match-objektet
+                this.matches[matchIndex].home_score = homeScore || 0;
+                this.matches[matchIndex].away_score = awayScore || 0;
+                this.matches[matchIndex].overtime = (resultType !== 'regular');
+                
+                console.log('✅ Match uppdaterad:', this.matches[matchIndex]);
+            }
+            
+            // Räkna om ALLT från grunden
+            this.recalculateAllStats();
             
             // Markera matchen som simulerad
             matchContainer.style.backgroundColor = '#f0f8f0';
@@ -784,21 +788,27 @@ class SHLSimulator {
             console.log('✅ renderTable klar');
         } else {
             // Ta bort simulering om scores rensas
-            if (this.simulatedResults.has(matchId)) {
-                this.simulatedResults.delete(matchId);
-                // Återställ originaldata och rendera om
-                this.loadTeamStats().then(() => {
-                    // Återapplicera alla aktiva simuleringar
-                    for (const [simMatchId, simResult] of this.simulatedResults) {
-                        this.updateTeamStats(simResult.homeTeam, simResult.awayTeam, 
-                                           simResult.homeScore, simResult.awayScore, simResult.resultType);
-                    }
-                    this.renderTable();
-                });
-                
-                // Återställ matchens utseende
-                matchContainer.style.backgroundColor = '';
-                matchContainer.style.border = '';
+            const homeTeam = homeInput.dataset.team;
+            const awayTeam = awayInput.dataset.team;
+            
+            const matchIndex = this.matches.findIndex(match => {
+                return match.home_team === homeTeam && match.away_team === awayTeam;
+            });
+            
+            if (matchIndex !== -1) {
+                // Återställ match till original (inga scores)
+                this.matches[matchIndex].home_score = null;
+                this.matches[matchIndex].away_score = null;
+                this.matches[matchIndex].overtime = false;
+            }
+            
+            // Räkna om allt igen
+            this.recalculateAllStats();
+            this.renderTable();
+            
+            // Återställ matchens utseende
+            matchContainer.style.backgroundColor = '';
+            matchContainer.style.border = '';
             }
         }
     }
@@ -808,125 +818,23 @@ class SHLSimulator {
 
 
 
-
-    updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
-        console.log(`🔍 updateTeamStats ANROPAD:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
-        
-        // Debug ALLA lagnamn
-        console.log('📋 ALLA lagnamn i teamStats:');
-        this.teamStats.forEach((team, index) => {
-            console.log(`  ${index}: "${team.name}" (ID: ${team.teamId})`);
-        });
-        
-        console.log('🏒 Söker efter dessa EXAKTA namn:', {
-            homeTeam: `"${homeTeam}"`, 
-            awayTeam: `"${awayTeam}"`
-        });
-        
-        const homeStats = this.teamStats.find(team => team.name === homeTeam);
-        const awayStats = this.teamStats.find(team => team.name === awayTeam);
-        
-        if (!homeStats) {
-            console.error('❌ Hemmalag ej hittat:', homeTeam);
-            console.error('Tillgängliga lagnamn:', this.teamStats.map(t => t.name));
-        }
-        if (!awayStats) {
-            console.error('❌ Bortalag ej hittat:', awayTeam);  
-        }
-        
-        if (!homeStats || !awayStats) {
-            return;
-        }
-        
-        console.log('✅ Hittat båda lagen:', homeStats.name, 'vs', awayStats.name);
-        
-        // Uppdatera matcher spelade
-        homeStats.GP = (homeStats.GP || 0) + 1;
-        awayStats.GP = (awayStats.GP || 0) + 1;
-        
-        // Uppdatera mål - både nya och gamla fält
-        homeStats.goals_for = (homeStats.goals_for || 0) + homeScore;
-        homeStats.GF = (homeStats.GF || 0) + homeScore; // Behåll för compatibility
-        homeStats.goals_against = (homeStats.goals_against || 0) + awayScore;
-        homeStats.GA = (homeStats.GA || 0) + awayScore; // Behåll för compatibility
-        awayStats.goals_for = (awayStats.goals_for || 0) + awayScore;
-        awayStats.GF = (awayStats.GF || 0) + awayScore; // Behåll för compatibility
-        awayStats.goals_against = (awayStats.goals_against || 0) + homeScore;
-        awayStats.GA = (awayStats.GA || 0) + homeScore; // Behåll för compatibility
-        
-        // Bestäm vinnare och uppdatera vinster/förluster
-        let homeWin = false;
-        let awayWin = false;
-        
-        if (homeScore > awayScore) {
-            homeWin = true;
-            homeStats.wins = (homeStats.wins || 0) + 1;
-            homeStats.W = (homeStats.W || 0) + 1; // Behåll för compatibility
-            if (resultType === 'regular') {
-                awayStats.losses = (awayStats.losses || 0) + 1;
-                awayStats.L = (awayStats.L || 0) + 1; // Behåll för compatibility
-            }
-        } else if (awayScore > homeScore) {
-            awayWin = true;
-            awayStats.wins = (awayStats.wins || 0) + 1;
-            awayStats.W = (awayStats.W || 0) + 1; // Behåll för compatibility
-            if (resultType === 'regular') {
-                homeStats.losses = (homeStats.losses || 0) + 1;
-                homeStats.L = (homeStats.L || 0) + 1; // Behåll för compatibility
-            }
-        }
-        
-        // Hantera poäng baserat på matchtyp
-        if (resultType === 'overtime' || resultType === 'shootout') {
-            // Förlängning eller straffläggning - förloraren får 1 poäng
-            if (homeWin) {
-                homeStats.points = (homeStats.points || 0) + 2; // Korrekt fält
-                homeStats.P = (homeStats.P || 0) + 2; // Behåll för compatibility
-                awayStats.points = (awayStats.points || 0) + 1; // Korrekt fält
-                awayStats.P = (awayStats.P || 0) + 1; // Behåll för compatibility
-                awayStats.overtime_losses = (awayStats.overtime_losses || 0) + 1; // Korrekt fält
-                awayStats.OTL = (awayStats.OTL || 0) + 1; // Behåll för compatibility
-                if (resultType === 'overtime') {
-                    homeStats.overtime_wins = (homeStats.overtime_wins || 0) + 1;
-                }
-            } else {
-                awayStats.points = (awayStats.points || 0) + 2; // Korrekt fält
-                awayStats.P = (awayStats.P || 0) + 2; // Behåll för compatibility
-                homeStats.points = (homeStats.points || 0) + 1; // Korrekt fält
-                homeStats.P = (homeStats.P || 0) + 1; // Behåll för compatibility
-                homeStats.overtime_losses = (homeStats.overtime_losses || 0) + 1; // Korrekt fält
-                homeStats.OTL = (homeStats.OTL || 0) + 1; // Behåll för compatibility
-                if (resultType === 'overtime') {
-                    awayStats.overtime_wins = (awayStats.overtime_wins || 0) + 1;
-                }
-            }
-        } else {
-            // Ordinarie tid - SHL-regler: 3 poäng för vinst, 0 för förlust
-            if (homeWin) {
-                homeStats.points = (homeStats.points || 0) + 3; // Vinst i ordinarie tid = 3p (SHL-regler)
-                homeStats.P = (homeStats.P || 0) + 3; // Behåll för compatibility
-            } else if (awayWin) {
-                awayStats.points = (awayStats.points || 0) + 3; // Vinst i ordinarie tid = 3p (SHL-regler)
-                awayStats.P = (awayStats.P || 0) + 3; // Behåll för compatibility
-            }
-            // Förloraren får 0 poäng i ordinarie tid
-        }
-        
-        console.log('Updated stats for:', homeTeam, homeStats);
-        console.log('Updated stats for:', awayTeam, awayStats);
-    }
 
     resetSimulation() {
-        // Töm simulerade resultat
-        this.simulatedResults.clear();
+        console.log('� Återställer simulering...');
         
-        // Återställ till ursprunglig statistik
-        this.teamStats.forEach(stat => {
-            const original = this.originalStats.get(stat.teamId);
-            if (original) {
-                Object.assign(stat, { ...original });
+        // Återställ alla matcher till original (ta bort simulerade resultat)
+        this.matches.forEach(match => {
+            // Behåll bara riktiga resultat (de som fanns från början)
+            // För nu tar vi bort ALLA simulerade resultat
+            if (!match.original_home_score && !match.original_away_score) {
+                match.home_score = null;
+                match.away_score = null;
+                match.overtime = false;
             }
         });
+        
+        // Räkna om statistik från grunden
+        this.recalculateAllStats();
 
         // Rensa alla inputs och återställ match-styling
         document.querySelectorAll('.match-item').forEach(matchItem => {
@@ -951,6 +859,120 @@ class SHLSimulator {
         this.renderMatches();
         
         console.log('🔄 Simulation återställd');
+    }
+
+    // Ny funktion: Återställ och räkna om ALLA statistik från grunden
+    recalculateAllStats() {
+        console.log('🔄 Omberäknar ALL statistik från grunden...');
+        
+        // 1. Återställ till originalvärden
+        this.teamStats = JSON.parse(JSON.stringify(this.originalTeamStats));
+        
+        // 2. Gå igenom ALLA matcher (både riktiga och simulerade)
+        this.matches.forEach(match => {
+            // Hoppa över matcher utan resultat
+            if (!match.home_score && !match.away_score) return;
+            
+            const homeTeam = match.home_team;
+            const awayTeam = match.away_team;
+            const homeScore = parseInt(match.home_score) || 0;
+            const awayScore = parseInt(match.away_score) || 0;
+            
+            // Bestäm matchtyp baserat på resultat
+            let resultType = 'regular';
+            if (match.overtime || (homeScore !== awayScore && Math.abs(homeScore - awayScore) === 1 && (homeScore > 3 || awayScore > 3))) {
+                resultType = 'overtime'; // Approximation för OT/SO
+            }
+            
+            this.addMatchToStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
+        });
+        
+        // 3. Sortera tabellen korrekt
+        this.sortTable();
+        
+        console.log('✅ Omberäkning klar!');
+    }
+    
+    // Hjälpfunktion: Lägg till EN match till statistiken
+    addMatchToStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
+        const homeStats = this.teamStats.find(team => team.name === homeTeam);
+        const awayStats = this.teamStats.find(team => team.name === awayTeam);
+        
+        if (!homeStats || !awayStats) {
+            console.warn('⚠️ Lag ej hittat för match:', homeTeam, 'vs', awayTeam);
+            return;
+        }
+        
+        // Uppdatera matcher spelade
+        homeStats.games += 1;
+        awayStats.games += 1;
+        
+        // Uppdatera mål
+        homeStats.goals_for += homeScore;
+        homeStats.goals_against += awayScore;
+        awayStats.goals_for += awayScore;
+        awayStats.goals_against += homeScore;
+        
+        // Uppdatera målskillnad
+        homeStats.goal_difference = homeStats.goals_for - homeStats.goals_against;
+        awayStats.goal_difference = awayStats.goals_for - awayStats.goals_against;
+        
+        // Bestäm vinnare och uppdatera vinster/förluster samt poäng
+        if (homeScore > awayScore) {
+            // Hemmalaget vinner
+            if (resultType === 'regular') {
+                // Ordinarie tid: 3-0 poäng
+                homeStats.wins += 1;
+                homeStats.points += 3;
+                awayStats.losses += 1;
+                // awayStats.points += 0 (ingen förändring)
+            } else {
+                // Övertid/Straffar: 2-1 poäng
+                homeStats.overtime_wins += 1;
+                homeStats.points += 2;
+                awayStats.overtime_losses += 1;
+                awayStats.points += 1;
+            }
+        } else if (awayScore > homeScore) {
+            // Bortalaget vinner
+            if (resultType === 'regular') {
+                // Ordinarie tid: 0-3 poäng
+                awayStats.wins += 1;
+                awayStats.points += 3;
+                homeStats.losses += 1;
+                // homeStats.points += 0 (ingen förändring)
+            } else {
+                // Övertid/Straffar: 1-2 poäng
+                awayStats.overtime_wins += 1;
+                awayStats.points += 2;
+                homeStats.overtime_losses += 1;
+                homeStats.points += 1;
+            }
+        }
+        // Oavgjort ska inte kunna hända i hockey, men vi hanterar det inte
+    }
+    
+    // Ny funktion: Sortera tabellen enligt SHL-regler
+    sortTable() {
+        this.teamStats.sort((a, b) => {
+            // 1. Poäng (högst först)
+            if (b.points !== a.points) {
+                return b.points - a.points;
+            }
+            
+            // 2. Målskillnad (bäst först)
+            if (b.goal_difference !== a.goal_difference) {
+                return b.goal_difference - a.goal_difference;
+            }
+            
+            // 3. Gjorda mål (flest först)
+            if (b.goals_for !== a.goals_for) {
+                return b.goals_for - a.goals_for;
+            }
+            
+            // 4. Alfabetisk ordning som sista utväg
+            return a.name.localeCompare(b.name);
+        });
     }
 
     formatDate(dateString) {
