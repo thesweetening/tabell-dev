@@ -448,12 +448,15 @@ class SHLSimulator {
 
     renderTable() {
         console.log('🎯 renderTable() ANROPAD - börjar rendera tabell');
+        console.log('📊 Antal simulerade resultat:', this.simulatedResults.size);
         
         const tableContainer = document.getElementById('standings-table');
         if (!tableContainer) {
             console.error('❌ Kunde inte hitta standings-table element');
             return;
         }
+        
+        console.log('✅ Hittade tableContainer, börjar rendera...');
         
         console.log('📋 Renderar tabell med', this.teamStats.length, 'lag');
         console.log('Teams:', this.teams.map(t => `${t.id}: ${t.Lag}`));
@@ -524,7 +527,8 @@ class SHLSimulator {
 
         console.log('📄 Sätter HTML för tabell, längd:', tableHTML.length);
         tableContainer.innerHTML = tableHTML;
-        console.log('✅ Tabell HTML uppsatt');
+        console.log('✅ Tabell HTML uppsatt - DOM uppdaterad!');
+        console.log('🏆 Topp 3 lag efter uppdatering:', sortedStats.slice(0, 3).map(s => `${s.name}: ${s.points}p`));
     }
 
     renderMatches() {
@@ -709,21 +713,40 @@ class SHLSimulator {
     }
 
     handleScoreInput(inputElement) {
-        if (!inputElement) return;
+        console.log('🎯 handleScoreInput KALLAD!');
+        
+        if (!inputElement) {
+            console.log('❌ Inget inputElement');
+            return;
+        }
         
         const matchId = inputElement.dataset.matchId;
         const matchContainer = inputElement.closest('.match-item');
         
-        if (!matchContainer) return;
+        if (!matchContainer) {
+            console.log('❌ Ingen matchContainer hittad');
+            return;
+        }
 
         const homeInput = matchContainer.querySelector('.score-input[data-team-type="home"]');
         const awayInput = matchContainer.querySelector('.score-input[data-team-type="away"]');
         const resultSelect = matchContainer.querySelector('.result-type');
         
-        if (!homeInput || !awayInput) return;
+        if (!homeInput || !awayInput) {
+            console.log('❌ Hittade inte home/away inputs');
+            return;
+        }
 
         const homeScore = homeInput.value ? parseInt(homeInput.value) : null;
         const awayScore = awayInput.value ? parseInt(awayInput.value) : null;
+        
+        console.log('📊 Input-värden:', {
+            matchId,
+            homeTeam: homeInput.dataset.team,
+            awayTeam: awayInput.dataset.team,
+            homeScore,
+            awayScore
+        });
         
         // Uppdatera om minst ett score är ifyllt
         if (homeScore !== null || awayScore !== null) {
@@ -783,11 +806,18 @@ class SHLSimulator {
 
 
     updateTeamStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
-        console.log(`🔍 updateTeamStats called with:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
+        console.log(`🔍 updateTeamStats ANROPAD:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
         
-        // Debug alla lagnamn från båda källor
-        console.log('📋 Alla lagnamn i teamStats:', this.teamStats.map(t => ({id: t.teamId, name: t.name})));
-        console.log('🏒 Söker efter lag:', {homeTeam, awayTeam});
+        // Debug ALLA lagnamn
+        console.log('📋 ALLA lagnamn i teamStats:');
+        this.teamStats.forEach((team, index) => {
+            console.log(`  ${index}: "${team.name}" (ID: ${team.teamId})`);
+        });
+        
+        console.log('🏒 Söker efter dessa EXAKTA namn:', {
+            homeTeam: `"${homeTeam}"`, 
+            awayTeam: `"${awayTeam}"`
+        });
         
         const homeStats = this.teamStats.find(team => team.name === homeTeam);
         const awayStats = this.teamStats.find(team => team.name === awayTeam);
