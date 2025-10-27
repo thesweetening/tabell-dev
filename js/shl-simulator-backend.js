@@ -358,6 +358,11 @@ class SHLSimulator {
             const response = await this.apiRequest('team-stats');
             console.log('🔍 DEBUG: Team_Stats API response:', response);
             
+            if (!response || !response.data || response.data.length === 0) {
+                console.error('❌ Ingen teamstats-data mottagen från API!');
+                throw new Error('Ingen teamstats-data från API');
+            }
+            
             // Debug: Skriv ut första posten för att se vad vi får från Airtable
             if (response.data.length > 0) {
                 console.log('🔍 Debug - Första Team_Stats post från Airtable:', response.data[0]);
@@ -452,7 +457,13 @@ class SHLSimulator {
 
     renderTable() {
         console.log('🎯 renderTable() ANROPAD - börjar rendera tabell');
-        console.log('📊 Antal simulerade resultat:', this.simulatedResults.size);
+        
+        // KRITISK KONTROLL: Har vi teamStats?
+        if (!this.teamStats || this.teamStats.length === 0) {
+            console.error('❌ INGA teamStats att rendera!');
+            console.error('originalTeamStats:', this.originalTeamStats?.length || 'undefined');
+            return;
+        }
         
         const tableContainer = document.getElementById('standings-table');
         if (!tableContainer) {
@@ -865,18 +876,37 @@ class SHLSimulator {
     recalculateAllStats() {
         console.log('🔄 Omberäknar ALL statistik från grunden...');
         
+        // DEBUG: Kontrollera att vi har originaldata
+        if (!this.originalTeamStats || this.originalTeamStats.length === 0) {
+            console.error('❌ INGEN originalTeamStats data! Använder nuvarande teamStats...');
+            return; // Gör ingenting om vi saknar originaldata
+        }
+        
+        console.log('📊 Återställer från originalTeamStats:', this.originalTeamStats.length, 'lag');
+        
         // 1. Återställ till originalvärden
         this.teamStats = JSON.parse(JSON.stringify(this.originalTeamStats));
         
+        console.log('📋 teamStats efter återställning:', this.teamStats.length, 'lag');
+        this.teamStats.forEach((team, i) => {
+            console.log(`  ${i}: ${team.name} - ${team.points}p`);
+        });
+        
         // 2. Gå igenom ALLA matcher (både riktiga och simulerade)
-        this.matches.forEach(match => {
-            // Hoppa över matcher utan resultat
-            if (!match.home_score && !match.away_score) return;
-            
+        const matchesWithResults = this.matches.filter(match => 
+            (match.home_score !== null && match.home_score !== undefined) || 
+            (match.away_score !== null && match.away_score !== undefined)
+        );
+        
+        console.log(`🏒 Processar ${matchesWithResults.length} matcher med resultat av ${this.matches.length} totalt`);
+        
+        matchesWithResults.forEach(match => {
             const homeTeam = match.home_team;
             const awayTeam = match.away_team;
             const homeScore = parseInt(match.home_score) || 0;
             const awayScore = parseInt(match.away_score) || 0;
+            
+            console.log(`  ⚽ ${homeTeam} ${homeScore}-${awayScore} ${awayTeam}`);
             
             // Bestäm matchtyp baserat på resultat
             let resultType = 'regular';
@@ -890,7 +920,10 @@ class SHLSimulator {
         // 3. Sortera tabellen korrekt
         this.sortTable();
         
-        console.log('✅ Omberäkning klar!');
+        console.log('✅ Omberäkning klar! Slutlig teamStats:', this.teamStats.length);
+        this.teamStats.forEach((team, i) => {
+            console.log(`  ${i+1}. ${team.name} - ${team.points}p (${team.wins}V, ${team.losses}F)`);
+        });
     }
     
     // Hjälpfunktion: Lägg till EN match till statistiken
@@ -900,8 +933,11 @@ class SHLSimulator {
         
         if (!homeStats || !awayStats) {
             console.warn('⚠️ Lag ej hittat för match:', homeTeam, 'vs', awayTeam);
+            console.warn('Tillgängliga lag:', this.teamStats.map(t => t.name));
             return;
         }
+        
+        console.log(`📈 Adderar stats: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
         
         // Uppdatera matcher spelade
         homeStats.games += 1;
