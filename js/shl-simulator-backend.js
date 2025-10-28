@@ -452,9 +452,16 @@ class SHLSimulator {
                 this.originalStats = new Map();
             }
             this.originalStats.clear();
-            this.teamStats.forEach(stat => {
-                this.originalStats.set(stat.teamId, { ...stat });
-            });
+            
+            // Säkerhetskontroll för teamStats
+            if (this.teamStats && Array.isArray(this.teamStats) && this.teamStats.length > 0) {
+                this.teamStats.forEach(stat => {
+                    this.originalStats.set(stat.teamId, { ...stat });
+                });
+                console.log(`✅ Backup av ${this.teamStats.length} lagstatistik skapad`);
+            } else {
+                console.error('❌ teamStats är tom eller undefined, kan inte skapa backup');
+            }
 
             console.log(`✅ Laddade statistik för ${this.teamStats.length} lag`);
         } catch (error) {
