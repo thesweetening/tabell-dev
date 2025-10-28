@@ -3,10 +3,12 @@
 class SHLSimulator {
     constructor() {
         this.teams = []; // För lagnamn (Teams-tabellen)
-        this.teamStats = []; // För statistik (Team_Stats-tabellen)
         this.matches = [];
-        this.simulatedResults = new Map(); // matchId -> {homeScore, awayScore}
-        this.originalStats = new Map(); // backup av ursprunglig statistik
+        
+        // NYTT KLONING-SYSTEM 🔄
+        this.originalTeamStats = []; // ORIGINAL från Airtable - rör ALDRIG!
+        this.currentTeamStats = []; // WORKING COPY för simulering
+        this.simulatedMatches = new Set(); // Håller reda på simulerade matcher
         
         // Backend API URL - fallback till frontend när backend inte är tillgängligt
         this.API_BASE_URL = this.getBackendUrl();
@@ -406,8 +408,12 @@ class SHLSimulator {
                 };
             });
             
-            // Kopiera för working copy
-            this.teamStats = JSON.parse(JSON.stringify(this.originalTeamStats));
+            console.log('✅ ORIGINAL TEAM STATS sparad:', this.originalTeamStats.length, 'lag');
+            
+            // KLONA för working copy
+            this.cloneOriginalData();
+            
+            console.log('✅ CURRENT TEAM STATS klonad för simulering');
 
             // Debug: Hitta och logga Frölundas specifika rådata
             const frolandaRaw = response.data.find(record => {
@@ -489,12 +495,15 @@ class SHLSimulator {
         
         console.log('✅ Hittade tableContainer, börjar rendera...');
         
-        console.log('📋 Renderar tabell med', this.teamStats.length, 'lag');
-        console.log('Teams:', this.teams.map(t => `${t.id}: ${t.Lag}`));
-        console.log('Stats teamIds:', this.teamStats.map(s => s.teamId));
+        console.log('📋 Renderar tabell med', this.currentTeamStats.length, 'lag');
+        
+        // Fallback till currentTeamStats om teamStats inte finns
+        const dataToRender = this.currentTeamStats.length > 0 ? this.currentTeamStats : this.teamStats;
+        
+        console.log('📊 Använder data:', dataToRender === this.currentTeamStats ? 'currentTeamStats' : 'teamStats');
 
         // Sortera enligt SHL-regler: 1) Poäng 2) Målskillnad 3) Gjorda mål
-        const sortedStats = [...this.teamStats].sort((a, b) => {
+        const sortedStats = [...dataToRender].sort((a, b) => {
             // 1. Sortera efter poäng (högst först)
             const pointsDiff = (b.points || 0) - (a.points || 0);
             if (pointsDiff !== 0) return pointsDiff;
@@ -771,104 +780,57 @@ class SHLSimulator {
         const homeScore = homeInput.value !== '' ? parseInt(homeInput.value) : null;
         const awayScore = awayInput.value !== '' ? parseInt(awayInput.value) : null;
         
-        console.log('🔍 SCORE DEBUG:', {
-            homeInput_value: homeInput.value,
-            awayInput_value: awayInput.value,
-            homeScore_parsed: homeScore,
-            awayScore_parsed: awayScore
-        });
-        
-        console.log('📊 Input-värden:', {
-            matchId,
+        console.log('🎯 KLONING-SIMULERING:', {
             homeTeam: homeInput.dataset.team,
             awayTeam: awayInput.dataset.team,
             homeScore,
             awayScore
         });
         
-        // Uppdatera endast om BÅDA scores är ifyllda
+        // Kräv båda scores för simulering
         if (homeScore !== null && awayScore !== null) {
             const resultType = resultSelect ? resultSelect.value : 'regular';
             const homeTeam = homeInput.dataset.team;
             const awayTeam = awayInput.dataset.team;
-            
-            // KRITISK FIX: Kontrollera om denna match redan är simulerad
             const matchKey = `${homeTeam}-${awayTeam}`;
-            if (this.simulatedMatches && this.simulatedMatches.has(matchKey)) {
-                console.log('⚠️ Match redan simulerad, hoppar över...');
-                return;
-            }
             
-            console.log(`🏒 ENKEL SIMULERING: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
+            console.log(`🏒 Simulerar: ${homeTeam} ${homeScore}-${awayScore} ${awayTeam} (${resultType})`);
             
-            // Initiera simulatedMatches om det inte finns
-            if (!this.simulatedMatches) {
-                this.simulatedMatches = new Set();
-            }
+            // STEG 1: Klona fresh data från original
+            this.cloneOriginalData();
+            console.log('� Fräsch kopia av originaldata skapad');
             
-            // ENKELT SYSTEM: Hitta lagen och uppdatera direkt
-            const homeStats = this.teamStats.find(team => team.name === homeTeam);
-            const awayStats = this.teamStats.find(team => team.name === awayTeam);
-            
-            if (!homeStats || !awayStats) {
-                console.error('❌ Lag ej hittat:', homeTeam, 'eller', awayTeam);
-                console.log('Tillgängliga lag:', this.teamStats.map(t => t.name));
-                return;
-            }
-            
-            console.log(`📊 FÖRE: ${homeTeam}=${homeStats.points}p, ${awayTeam}=${awayStats.points}p`);
-            
-            // Enkla poängregler: vinnare får poäng
+            // STEG 2: Lägg till simulerade poäng
             if (homeScore > awayScore) {
                 // Hemmalaget vinner
                 if (resultType === 'regular') {
-                    homeStats.points += 3;
-                    console.log(`🏆 ${homeTeam} vinner ordinarie - får +3p`);
+                    this.addPointsToTeam(homeTeam, 3, 'ordinarie vinst');
                 } else {
-                    homeStats.points += 2;
-                    awayStats.points += 1;
-                    console.log(`🏆 ${homeTeam} vinner OT/SO - får +2p, ${awayTeam} får +1p`);
+                    this.addPointsToTeam(homeTeam, 2, 'OT/SO vinst');
+                    this.addPointsToTeam(awayTeam, 1, 'OT/SO förlust');
                 }
             } else if (awayScore > homeScore) {
                 // Bortalaget vinner
                 if (resultType === 'regular') {
-                    awayStats.points += 3;
-                    console.log(`🏆 ${awayTeam} vinner ordinarie - får +3p`);
+                    this.addPointsToTeam(awayTeam, 3, 'ordinarie vinst');
                 } else {
-                    awayStats.points += 2;
-                    homeStats.points += 1;
-                    console.log(`🏆 ${awayTeam} vinner OT/SO - får +2p, ${homeTeam} får +1p`);
+                    this.addPointsToTeam(awayTeam, 2, 'OT/SO vinst');
+                    this.addPointsToTeam(homeTeam, 1, 'OT/SO förlust');
                 }
             }
             
-            // Markera som simulerad
-            this.simulatedMatches.add(matchKey);
-            
-            console.log(`📊 EFTER: ${homeTeam}=${homeStats.points}p, ${awayTeam}=${awayStats.points}p`);
-            
-            // Markera matchen som simulerad
+            // STEG 3: Markera match som simulerad
             matchContainer.style.backgroundColor = '#f0f8f0';
             matchContainer.style.border = '1px solid #4CAF50';
             
-            // Uppdatera tabellen direkt
-            this.renderTable();
+            // STEG 4: Rendera tabellen med nya data
+            this.renderTableFromCurrentData();
         } else {
-            // Ta bort simulering
-            const homeTeam = homeInput.dataset.team;
-            const awayTeam = awayInput.dataset.team;
-            const matchKey = `${homeTeam}-${awayTeam}`;
+            // ENKEL RESET: Klona tillbaka originaldata
+            console.log('🔄 Återställer till originaldata');
             
-            console.log('🔄 Rensar simulering för:', matchKey);
-            
-            // Ta bort från simulerade matcher
-            if (this.simulatedMatches) {
-                this.simulatedMatches.delete(matchKey);
-            }
-            
-            // Enkel lösning: ladda om teamStats från början
-            this.loadTeamStatsData().then(() => {
-                this.renderTable();
-            });
+            this.cloneOriginalData();
+            this.renderTableFromCurrentData();
             
             // Återställ matchens utseende
             matchContainer.style.backgroundColor = '';
@@ -992,6 +954,46 @@ class SHLSimulator {
         });
     }
     
+    // NYTT KLONING-SYSTEM 🔄
+    cloneOriginalData() {
+        // Skapa en helt ren kopia av originaldata
+        this.currentTeamStats = this.originalTeamStats.map(team => ({
+            ...team, // Kopiera alla egenskaper
+            // Säkerställ att numeriska värden är korrekta
+            games: Number(team.games) || 0,
+            wins: Number(team.wins) || 0, 
+            overtime_wins: Number(team.overtime_wins) || 0,
+            losses: Number(team.losses) || 0,
+            overtime_losses: Number(team.overtime_losses) || 0,
+            goals_for: Number(team.goals_for) || 0,
+            goals_against: Number(team.goals_against) || 0,
+            goal_difference: Number(team.goal_difference) || 0,
+            points: Number(team.points) || 0
+        }));
+        
+        console.log('🔄 Klonat', this.currentTeamStats.length, 'lag för simulering');
+    }
+    
+    // Enkel funktion för att lägga till poäng till ett lag
+    addPointsToTeam(teamName, points, matchType = 'regular') {
+        const team = this.currentTeamStats.find(t => t.name === teamName);
+        if (!team) {
+            console.error('❌ Lag ej hittat:', teamName);
+            return false;
+        }
+        
+        console.log(`📊 ${teamName}: ${team.points}p → ${team.points + points}p (+${points}p ${matchType})`);
+        team.points += points;
+        
+        // Uppdatera även vinster/förluster för korrekt sortering
+        if (points === 3) team.wins += 1;
+        else if (points === 2) team.overtime_wins += 1;
+        else if (points === 1) team.overtime_losses += 1;
+        else if (points === 0) team.losses += 1;
+        
+        return true;
+    }
+    
     // Hjälpfunktion: Lägg till EN match till statistiken
     addMatchToStats(homeTeam, awayTeam, homeScore, awayScore, resultType) {
         console.log(`🔍 addMatchToStats anropad med:`, {homeTeam, awayTeam, homeScore, awayScore, resultType});
@@ -1102,6 +1104,65 @@ class SHLSimulator {
             // 4. Alfabetisk ordning som sista utväg
             return a.name.localeCompare(b.name);
         });
+    }
+    
+    // Ny render-funktion som använder currentTeamStats
+    renderTableFromCurrentData() {
+        const tableContainer = document.getElementById('standings-table');
+        if (!tableContainer) {
+            console.error('❌ Kunde inte hitta standings-table element');
+            return;
+        }
+        
+        console.log('🎯 Renderar tabell från currentTeamStats:', this.currentTeamStats.length, 'lag');
+        
+        // Sortera enligt SHL-regler
+        const sortedStats = [...this.currentTeamStats].sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
+            if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+            return a.name.localeCompare(b.name);
+        });
+
+        const tableHTML = `
+            <table class="shl-table" style="color: #333 !important;">
+                <thead>
+                    <tr style="background: #dc2626; color: white;">
+                        <th>Pos</th>
+                        <th>Lag</th>
+                        <th>M</th>
+                        <th>V</th>
+                        <th>VÖ</th>
+                        <th>F</th>
+                        <th>FÖ</th>
+                        <th>GM</th>
+                        <th>IM</th>
+                        <th>+/-</th>
+                        <th style="font-weight: bold; background: #b91c1c;">Poäng</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${sortedStats.map((stat, index) => `
+                        <tr>
+                            <td><strong>${index + 1}</strong></td>
+                            <td style="text-align: left;"><strong>${stat.name}</strong></td>
+                            <td>${stat.games}</td>
+                            <td>${stat.wins}</td>
+                            <td>${stat.overtime_wins}</td>
+                            <td>${stat.losses}</td>
+                            <td>${stat.overtime_losses}</td>
+                            <td>${stat.goals_for}</td>
+                            <td>${stat.goals_against}</td>
+                            <td>${stat.goal_difference > 0 ? '+' : ''}${stat.goal_difference}</td>
+                            <td style="font-weight: bold; background: #dc2626; color: white;">${stat.points}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        `;
+
+        tableContainer.innerHTML = tableHTML;
+        console.log('✅ Tabell renderad med currentTeamStats!');
     }
 
     formatDate(dateString) {
