@@ -833,24 +833,8 @@ class SHLSimulator {
             this.cloneOriginalData();
             console.log('� Fräsch kopia av originaldata skapad');
             
-            // STEG 2: Lägg till simulerade poäng
-            if (homeScore > awayScore) {
-                // Hemmalaget vinner
-                if (resultType === 'regular') {
-                    this.addPointsToTeam(homeTeam, 3, 'ordinarie vinst');
-                } else {
-                    this.addPointsToTeam(homeTeam, 2, 'OT/SO vinst');
-                    this.addPointsToTeam(awayTeam, 1, 'OT/SO förlust');
-                }
-            } else if (awayScore > homeScore) {
-                // Bortalaget vinner
-                if (resultType === 'regular') {
-                    this.addPointsToTeam(awayTeam, 3, 'ordinarie vinst');
-                } else {
-                    this.addPointsToTeam(awayTeam, 2, 'OT/SO vinst');
-                    this.addPointsToTeam(homeTeam, 1, 'OT/SO förlust');
-                }
-            }
+            // STEG 2: Lägg till komplett matchstatistik (mål + vinster/förluster + poäng)
+            this.addMatchToStats(homeTeam, awayTeam, homeScore, awayScore, resultType);
             
             // STEG 3: Markera match som simulerad
             matchContainer.style.backgroundColor = '#f0f8f0';

@@ -103,6 +103,16 @@
                     </div>
                 </div>
 
+                <!-- Today's Matches -->
+                <div class="content-card" style="margin-top: 2rem;">
+                    <h3>🏒 Dagens Matcher</h3>
+                    <div id="todays-matches" class="matches-container">
+                        <p style="text-align: center; color: #666; padding: 2rem;">
+                            Laddar dagens matcher...
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Recent Matches Display -->
                 <div class="content-card" style="margin-top: 2rem;">
                     <h3>📋 Senaste Matcher</h3>
@@ -361,6 +371,155 @@
             logMessage('🗑️ Cache rensad');
         }
 
+        // Ladda dagens matcher
+        async function loadTodaysMatches() {
+            try {
+                logMessage('📅 Laddar dagens matcher...');
+                
+                // Försök backend först
+                let response;
+                try {
+                    response = await fetch('/api/matches/today');
+                    if (!response.ok) throw new Error('Backend inte tillgängligt');
+                } catch (backendError) {
+                    logMessage('⚠️ Backend inte tillgängligt, försöker PHP...');
+                    response = await fetch('api-today-matches.php');
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                displayTodaysMatches(data.data);
+                
+                logMessage(`✅ ${data.count} matcher hittade för ${data.date}`);
+                
+            } catch (error) {
+                logMessage(`❌ Fel vid laddning av dagens matcher: ${error.message}`);
+                document.getElementById('todays-matches').innerHTML = `
+                    <p style="color: #666; text-align: center; padding: 2rem;">
+                        Kunde inte ladda dagens matcher. Använd formuläret ovan för att registrera resultat.
+                    </p>
+                `;
+            }
+        }
+
+        // Visa dagens matcher
+        function displayTodaysMatches(matches) {
+            const container = document.getElementById('todays-matches');
+            
+            if (matches.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Inga matcher idag. Ha en bra dag! 😊</p>';
+                return;
+            }
+
+            const matchesHTML = matches.map(match => {
+                const homeTeam = getTeamName(match.fields.home_team);
+                const awayTeam = getTeamName(match.fields.away_team);
+                const matchTime = match.fields.match_time || 'TBD';
+                const finished = match.fields.finished;
+                
+                return `
+                    <div class="match-card ${finished ? 'finished' : 'pending'}" data-match-id="${match.id}" style="background: white; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin: 10px 0; ${finished ? 'opacity: 0.7;' : ''}">
+                        <div class="match-teams" style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">
+                            <span class="home-team">${homeTeam}</span>
+                            <span style="margin: 0 10px; color: #666;">vs</span>
+                            <span class="away-team">${awayTeam}</span>
+                        </div>
+                        <div class="match-time" style="color: #666; margin-bottom: 10px;">🕐 ${matchTime}</div>
+                        ${finished ? 
+                            `<div class="match-result" style="color: #28a745; font-weight: bold;">✅ Klar: ${match.fields.home_goals || 0}-${match.fields.away_goals || 0}</div>` :
+                            `<button onclick="setMatchResult('${match.id}', '${homeTeam}', '${awayTeam}')" class="btn btn-primary">⚽ Sätt resultat</button>`
+                        }
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = matchesHTML;
+        }
+
+        // Hjälpfunktion för att hämta lagnamn
+        function getTeamName(teamArray) {
+            if (Array.isArray(teamArray) && teamArray.length > 0 && teams.length > 0) {
+                const team = teams.find(t => t.id === teamArray[0]);
+                return team?.name || 'Okänt lag';
+            }
+            return 'Okänt lag';
+        }
+
+        // Sätt resultat för en specifik match
+        function setMatchResult(matchId, homeTeam, awayTeam) {
+            const homeScore = prompt(`Mål för ${homeTeam}:`);
+            if (homeScore === null) return;
+            
+            const awayScore = prompt(`Mål för ${awayTeam}:`);
+            if (awayScore === null) return;
+
+            const resultType = prompt(`Resultattyp (regulation/overtime/shootout):`, 'regulation');
+            if (resultType === null) return;
+
+            saveMatchResult(matchId, homeScore, awayScore, resultType);
+        }
+
+        // Spara matchresultat till backend
+        async function saveMatchResult(matchId, homeScore, awayScore, resultType) {
+            try {
+                showSpinner(true);
+                logMessage(`💾 Sparar resultat för match ${matchId}: ${homeScore}-${awayScore}`);
+
+                const requestData = {
+                    homeScore: parseInt(homeScore),
+                    awayScore: parseInt(awayScore),
+                    resultType: resultType || 'regulation'
+                };
+
+                // Försök backend först
+                let response;
+                try {
+                    response = await fetch(`/api/matches/${matchId}/result`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(requestData)
+                    });
+                    
+                    if (!response.ok && response.status >= 500) {
+                        throw new Error('Backend inte tillgängligt');
+                    }
+                } catch (backendError) {
+                    logMessage('⚠️ Backend inte tillgängligt, försöker PHP...');
+                    response = await fetch(`api-save-match.php?match_id=${matchId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(requestData)
+                    });
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    logMessage(`✅ ${data.message}`);
+                    showMessage('✅ Matchresultat sparat!', 'success');
+                    
+                    // Uppdatera vyn
+                    loadTodaysMatches();
+                } else {
+                    throw new Error(data.message || data.error);
+                }
+
+            } catch (error) {
+                logMessage(`❌ Fel vid sparande: ${error.message}`);
+                showMessage(`❌ Fel: ${error.message}`, 'error');
+            } finally {
+                showSpinner(false);
+            }
+        }
+
         // Utility functions
         function showSpinner(show) {
             const spinner = document.getElementById('loading-spinner');
@@ -400,6 +559,9 @@
                 
                 // Ladda lag automatiskt
                 testConnection();
+                
+                // Ladda dagens matcher
+                loadTodaysMatches();
             }
         });
 

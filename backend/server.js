@@ -357,6 +357,91 @@ app.use((err, req, res, next) => {
     });
 });
 
+// Sätt matchresultat
+app.post('/api/matches/:id/result', requireAuth, async (req, res) => {
+    try {
+        const matchId = req.params.id;
+        const { homeScore, awayScore, resultType } = req.body;
+
+        console.log(`🏒 Sätter resultat för match ${matchId}: ${homeScore}-${awayScore} (${resultType})`);
+
+        // Validering
+        if (homeScore === null || homeScore === undefined) {
+            return res.status(400).json({ success: false, message: 'Hemmalags-mål saknas' });
+        }
+        if (awayScore === null || awayScore === undefined) {
+            return res.status(400).json({ success: false, message: 'Bortalags-mål saknas' });
+        }
+        if (homeScore === awayScore) {
+            return res.status(400).json({ success: false, message: 'Matcher kan inte sluta oavgjort i SHL' });
+        }
+
+        // Uppdatera match i Airtable
+        const matchUpdate = {
+            records: [{
+                id: matchId,
+                fields: {
+                    home_goals: parseInt(homeScore),
+                    away_goals: parseInt(awayScore),
+                    finished: true,
+                    result_type: resultType || 'regulation'
+                }
+            }]
+        };
+
+        await airtableRequest('Matches', {
+            method: 'PATCH',
+            data: matchUpdate
+        });
+
+        console.log(`✅ Match ${matchId} resultat sparat: ${homeScore}-${awayScore}`);
+
+        res.json({
+            success: true,
+            message: `Matchresultat sparat: ${homeScore}-${awayScore}`,
+            match: {
+                id: matchId,
+                homeScore: parseInt(homeScore),
+                awayScore: parseInt(awayScore),
+                resultType: resultType || 'regulation',
+                finished: true
+            }
+        });
+
+    } catch (error) {
+        console.error('Error saving match result:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Kunde inte spara matchresultat: ' + error.message
+        });
+    }
+});
+
+// Hämta dagens matcher för admin-panel
+app.get('/api/matches/today', requireAuth, async (req, res) => {
+    try {
+        const today = new Date().toISOString().split('T')[0];
+        console.log(`📅 Hämtar matcher för ${today}`);
+
+        const endpoint = `Matches?filterByFormula=IS_SAME(match_date%2C'${today}')&sort%5B0%5D%5Bfield%5D=match_time&sort%5B0%5D%5Bdirection%5D=asc`;
+        const data = await airtableRequest(endpoint);
+
+        res.json({
+            success: true,
+            data: data.records,
+            date: today,
+            count: data.records.length
+        });
+
+    } catch (error) {
+        console.error('Error fetching today matches:', error);
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+});
+
 // 404 handler
 app.use((req, res) => {
     res.status(404).json({
