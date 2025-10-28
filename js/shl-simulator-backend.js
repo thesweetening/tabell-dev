@@ -413,6 +413,9 @@ class SHLSimulator {
             // KLONA för working copy
             this.cloneOriginalData();
             
+            // BACKWARDS COMPATIBILITY: Sätt även teamStats för gamla funktioner
+            this.teamStats = [...this.currentTeamStats];
+            
             console.log('✅ CURRENT TEAM STATS klonad för simulering');
 
             // Debug: Hitta och logga Frölundas specifika rådata
@@ -480,11 +483,27 @@ class SHLSimulator {
     renderTable() {
         console.log('🎯 renderTable() ANROPAD - börjar rendera tabell');
         
-        // KRITISK KONTROLL: Har vi teamStats?
-        if (!this.teamStats || this.teamStats.length === 0) {
-            console.error('❌ INGA teamStats att rendera!');
-            console.error('originalTeamStats:', this.originalTeamStats?.length || 'undefined');
-            return;
+        // DEBUG: Kolla alla datastats
+        console.log('📊 DATA STATUS:', {
+            originalTeamStats: this.originalTeamStats?.length || 0,
+            currentTeamStats: this.currentTeamStats?.length || 0, 
+            teamStats: this.teamStats?.length || 0
+        });
+        
+        // KRITISK KONTROLL: Har vi någon data?
+        if ((!this.currentTeamStats || this.currentTeamStats.length === 0) && 
+            (!this.teamStats || this.teamStats.length === 0)) {
+            console.error('❌ INGEN data att rendera!');
+            
+            // Försök klona om vi har originaldata
+            if (this.originalTeamStats && this.originalTeamStats.length > 0) {
+                console.log('🔄 Försöker klona originaldata...');
+                this.cloneOriginalData();
+                this.teamStats = [...this.currentTeamStats];
+            } else {
+                console.error('❌ Ingen originaldata heller!');
+                return;
+            }
         }
         
         const tableContainer = document.getElementById('standings-table');
