@@ -4,11 +4,17 @@ class SHLSimulator {
     constructor() {
         this.teams = []; // För lagnamn (Teams-tabellen)
         this.matches = [];
+        this.teamStats = []; // BACKWARDS COMPATIBILITY - initialisera tidigt
         
         // NYTT KLONING-SYSTEM 🔄
         this.originalTeamStats = []; // ORIGINAL från Airtable - rör ALDRIG!
         this.currentTeamStats = []; // WORKING COPY för simulering
         this.simulatedMatches = new Set(); // Håller reda på simulerade matcher
+        
+        // GAMLA SYSTEM - för backwards compatibility  
+        this.teamStats = []; // Bakåtkompatibilitet - pekar till currentTeamStats
+        this.originalStats = new Map(); // För reset-funktionalitet
+        this.simulatedResults = new Map(); // För att spåra simulerade resultat
         
         // Backend API URL - fallback till frontend när backend inte är tillgängligt
         this.API_BASE_URL = this.getBackendUrl();
@@ -414,7 +420,12 @@ class SHLSimulator {
             this.cloneOriginalData();
             
             // BACKWARDS COMPATIBILITY: Sätt även teamStats för gamla funktioner
-            this.teamStats = [...this.currentTeamStats];
+            if (this.currentTeamStats && this.currentTeamStats.length > 0) {
+                this.teamStats = [...this.currentTeamStats];
+            } else {
+                console.error('❌ currentTeamStats är tom, kan inte sätta teamStats');
+                this.teamStats = [];
+            }
             
             console.log('✅ CURRENT TEAM STATS klonad för simulering');
 
@@ -437,6 +448,9 @@ class SHLSimulator {
             }
 
             // Backup original stats för reset-funktionalitet
+            if (!this.originalStats) {
+                this.originalStats = new Map();
+            }
             this.originalStats.clear();
             this.teamStats.forEach(stat => {
                 this.originalStats.set(stat.teamId, { ...stat });
@@ -975,6 +989,13 @@ class SHLSimulator {
     
     // NYTT KLONING-SYSTEM 🔄
     cloneOriginalData() {
+        // Säkerhetskontroll
+        if (!this.originalTeamStats || this.originalTeamStats.length === 0) {
+            console.error('❌ Kan inte klona - originalTeamStats är tom eller undefined');
+            this.currentTeamStats = [];
+            return;
+        }
+        
         // Skapa en helt ren kopia av originaldata
         this.currentTeamStats = this.originalTeamStats.map(team => ({
             ...team, // Kopiera alla egenskaper
