@@ -1,71 +1,433 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html><!DOCTYPE html>
+
 <html lang="sv">
-<head>
+
+<head><html lang="sv"><html lang="sv">
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tabell.top - Hem</title>
-    <meta name="description" content="Tabell.top - Din webbplats för tabellhantering">
-    <link rel="stylesheet" href="css/style.css?v=12.0">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"><head><head>
+
+    <title>Tabell.top - SHL Simulator</title>
+
+        <meta charset="UTF-8">    <meta charset="UTF-8">
+
+    <!-- CSS -->
+
+    <link rel="stylesheet" href="css/main.css">    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    
+
+    <!-- Favicons -->    <title>SHL Simulator v2.0 - Tabellsimulering</title>    <title>Tabell.top - Hem</title>
+
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+        <meta name="description" content="Simulera SHL-tabellen med egna matchresultat. Se hur tabellen förändras baserat på dina prognoser.">    <meta name="description" content="Tabell.top - Din webbplats för tabellhantering">
+
+    <!-- Meta tags -->
+
+    <meta name="description" content="Simulera SHL-matcher och se hur tabellen påverkas i realtid. Den ultimata simulatorn för ishockeyentusiaster.">    <link rel="stylesheet" href="css/main.css">    <link rel="stylesheet" href="css/style.css?v=12.0">
+
+    <meta name="keywords" content="SHL, simulator, ishockey, tabell, slutspel, matcher, resultat, hockey">
+
+        <link rel="stylesheet" href="css/simulator.css"></head>
+
+    <!-- Font Awesome för ikoner -->
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></head><body>
+
 </head>
-<body>
-    <header>
-        <nav class="navbar">
-            <div class="container">
-                <div class="nav-brand">
-                    <h1>Tabell.top</h1>
-                </div>
-                <ul class="nav-menu">
-                    <li><a href="index.html">Hem</a></li>
-                    <li><a href="shl-simulator.html">SHL Simulator</a></li>
-                    <li><a href="about.html">Om oss</a></li>
-                    <li><a href="contact.html">Kontakt</a></li>
-                </ul>
-            </div>
-        </nav>
-    </header>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <span style="font-size: 6rem;">⛄</span>
-                    <span style="font-size: 4rem; margin: 0 20px;">🏒</span>
-                    <span style="font-size: 6rem;">⛄</span>
-                </div>
-                <h2>SHL Tabellsimulator är här!</h2>
-                <p>� Simulera SHL-resultat och se hur tabellen förändras! Fyll i resultat för kommande matcher och upptäck alla möjliga scenarion.</p>
-                <div style="background: rgba(220,20,60,0.1); color: #dc143c; padding: 20px; margin: 10px 0; border-radius: 10px; border: 2px solid #dc143c;">
-                    <strong>� SHL TABELLSIMULATOR �</strong><br>
-                    Testa olika matchutfall och se hur SHL-tabellen kan komma att se ut!
-                </div>
-                <a href="shl-simulator.html" class="btn btn-primary">🎯 Testa Simulatorn</a>
-            </div>
-        </section>
+<body><body>    <header>
 
-        <section id="features" class="features">
-            <div class="container">
-                <h3>Funktioner</h3>
-                <div class="feature-grid">
-                    <div class="feature-card">
-                        <h4>🏒 SHL Tabellsimulator</h4>
-                        <p>Simulera matchresultat och se hur SHL-tabellen förändras i realtid. Perfekt för att testa olika scenarion!</p>
-                    </div>
-                    <div class="feature-card">
-                        <h4>📊 Levande tabelldata</h4>
-                        <p>All data hämtas direkt från officiella SHL-kalendern med aktuella lag och matcher.</p>
-                    </div>
-                    <div class="feature-card">
-                        <h4>💾 Spara simuleringar</h4>
-                        <p>Spara dina favoritsimuleringar och dela dem med vänner (kommer snart!).</p>
+    <!-- Navigation -->
+
+    <nav class="nav">    <header class="header">        <nav class="navbar">
+
+        <div class="nav-container">
+
+            <div class="nav-brand">        <div class="container">            <div class="container">
+
+                <a href="/">
+
+                    <i class="fas fa-table-tennis"></i>            <nav class="navbar">                <div class="nav-brand">
+
+                    <span>Tabell.top</span>
+
+                </a>                <a href="/" class="logo">                    <h1>Tabell.top</h1>
+
+            </div>
+
+            <div class="nav-menu">                    SHL Simulator v2.0                </div>
+
+                <a href="/" class="nav-link active">Hem</a>
+
+                <a href="simulator.html" class="nav-link">Simulator</a>                </a>                <ul class="nav-menu">
+
+                <a href="/admin" class="nav-link">Admin</a>
+
+            </div>                <ul class="nav-links">                    <li><a href="index.html">Hem</a></li>
+
+            <div class="nav-toggle">
+
+                <i class="fas fa-bars"></i>                    <li><a href="/" class="nav-link">Hem</a></li>                    <li><a href="shl-simulator.html">SHL Simulator</a></li>
+
+            </div>
+
+        </div>                    <li><a href="simulator.html" class="nav-link">Simulator</a></li>                    <li><a href="about.html">Om oss</a></li>
+
+    </nav>
+
+                    <li><a href="admin-login.html" class="nav-link">Admin</a></li>                    <li><a href="contact.html">Kontakt</a></li>
+
+    <!-- Main Content -->
+
+    <main class="main">                </ul>                </ul>
+
+        <div class="container">
+
+            <!-- Hero sektion -->            </nav>            </div>
+
+            <section class="hero fade-in">
+
+                <div class="hero-content">        </div>        </nav>
+
+                    <h1 class="hero-title">🏒 SHL Tabellsimulator</h1>
+
+                    <p class="hero-subtitle">    </header>    </header>
+
+                        Simulera SHL-tabellen med dina egna matchresultat och se hur slutställningen kan komma att se ut!
+
+                    </p>
+
+                    <div class="hero-actions">
+
+                        <a href="simulator.html" class="btn btn-primary btn-large">    <main class="main">    <main>
+
+                            🎮 Starta Simulator
+
+                        </a>        <div class="container">        <section class="hero">
+
+                        <a href="#features" class="btn btn-secondary btn-large">
+
+                            📋 Läs mer            <!-- Hero sektion -->            <div class="container">
+
+                        </a>
+
+                    </div>            <section class="hero fade-in">                <div style="text-align: center; margin-bottom: 20px;">
+
+                </div>
+
+            </section>                <div class="hero-content">                    <span style="font-size: 6rem;">⛄</span>
+
+
+
+            <!-- Funktioner -->                    <h1 class="hero-title">🏒 SHL Tabellsimulator</h1>                    <span style="font-size: 4rem; margin: 0 20px;">🏒</span>
+
+            <section id="features" class="features">
+
+                <h2 class="section-title">Funktioner</h2>                    <p class="hero-subtitle">                    <span style="font-size: 6rem;">⛄</span>
+
+                <div class="features-grid">
+
+                    <div class="feature-card card slide-in">                        Simulera SHL-tabellen med dina egna matchresultat och se hur slutställningen kan komma att se ut!                </div>
+
+                        <div class="feature-icon">⚡</div>
+
+                        <h3>Realtidsuppdatering</h3>                    </p>                <h2>SHL Tabellsimulator är här!</h2>
+
+                        <p>Tabellen uppdateras automatiskt när du fyller i matchresultat. Inga knappar att trycka på!</p>
+
+                    </div>                    <div class="hero-actions">                <p>� Simulera SHL-resultat och se hur tabellen förändras! Fyll i resultat för kommande matcher och upptäck alla möjliga scenarion.</p>
+
+
+
+                    <div class="feature-card card slide-in">                        <a href="simulator.html" class="btn btn-primary btn-large">                <div style="background: rgba(220,20,60,0.1); color: #dc143c; padding: 20px; margin: 10px 0; border-radius: 10px; border: 2px solid #dc143c;">
+
+                        <div class="feature-icon">🎯</div>
+
+                        <h3>Korrekt poängsystem</h3>                            🎮 Starta Simulator                    <strong>� SHL TABELLSIMULATOR �</strong><br>
+
+                        <p>Följer SHL:s officiella poängsystem med 3-2-1-0 poäng för vinst, förlängning och förlust.</p>
+
+                    </div>                        </a>                    Testa olika matchutfall och se hur SHL-tabellen kan komma att se ut!
+
+
+
+                    <div class="feature-card card slide-in">                        <a href="#features" class="btn btn-secondary btn-large">                </div>
+
+                        <div class="feature-icon">📊</div>
+
+                        <h3>Komplett statistik</h3>                            📋 Läs mer                <a href="shl-simulator.html" class="btn btn-primary">🎯 Testa Simulatorn</a>
+
+                        <p>Visa alla 14 SHL-lag med matcher, mål, målskillnad och poäng. Sorterat enligt SHL-reglerna.</p>
+
+                    </div>                        </a>            </div>
+
+
+
+                    <div class="feature-card card slide-in">                    </div>        </section>
+
+                        <div class="feature-icon">🔐</div>
+
+                        <h3>Admin-panel</h3>                </div>
+
+                        <p>Säker inloggning med Google OAuth för att registrera riktiga matchresultat efter varje omgång.</p>
+
+                    </div>            </section>        <section id="features" class="features">
+
+
+
+                    <div class="feature-card card slide-in">            <div class="container">
+
+                        <div class="feature-icon">📱</div>
+
+                        <h3>Responsiv design</h3>            <!-- Funktioner -->                <h3>Funktioner</h3>
+
+                        <p>Fungerar perfekt på mobil, surfplatta och dator. Snyggt ljust orange-tema som är piggt och fräscht.</p>
+
+                    </div>            <section id="features" class="features">                <div class="feature-grid">
+
+                    
+
+                    <div class="feature-card card slide-in">                <h2 class="section-title">Funktioner</h2>                    <div class="feature-card">
+
+                        <div class="feature-icon">🚀</div>
+
+                        <h3>Snabb prestanda</h3>                <div class="features-grid">                        <h4>🏒 SHL Tabellsimulator</h4>
+
+                        <p>Byggd med MySQL och PHP för blixtsnabb laddning och uppdatering av data.</p>
+
+                    </div>                    <div class="feature-card card slide-in">                        <p>Simulera matchresultat och se hur SHL-tabellen förändras i realtid. Perfekt för att testa olika scenarion!</p>
+
+                </div>
+
+            </section>                        <div class="feature-icon">⚡</div>                    </div>
+
+
+
+            <!-- Så här funkar det -->                        <h3>Realtidsuppdatering</h3>                    <div class="feature-card">
+
+            <section class="how-it-works">
+
+                <h2 class="section-title">Så här fungerar det</h2>                        <p>Tabellen uppdateras automatiskt när du fyller i matchresultat. Inga knappar att trycka på!</p>                        <h4>📊 Levande tabelldata</h4>
+
+                <div class="steps">
+
+                    <div class="step">                    </div>                        <p>All data hämtas direkt från officiella SHL-kalendern med aktuella lag och matcher.</p>
+
+                        <div class="step-number">1</div>
+
+                        <div class="step-content">                                        </div>
+
+                            <h3>Öppna simulatorn</h3>
+
+                            <p>Klicka på "Starta Simulator" för att komma till huvudsidan med tabellen och kommande matcher.</p>                    <div class="feature-card card slide-in">                    <div class="feature-card">
+
+                        </div>
+
+                    </div>                        <div class="feature-icon">🎯</div>                        <h4>💾 Spara simuleringar</h4>
+
+                    
+
+                    <div class="step">                        <h3>Korrekt poängsystem</h3>                        <p>Spara dina favoritsimuleringar och dela dem med vänner (kommer snart!).</p>
+
+                        <div class="step-number">2</div>
+
+                        <div class="step-content">                        <p>Följer SHL:s officiella poängsystem med 3-2-1-0 poäng för vinst, förlängning och förlust.</p>                    </div>
+
+                            <h3>Fyll i resultat</h3>
+
+                            <p>Skriv in mål för hemma- och bortalag i matchlistan. Tabellen uppdateras automatiskt!</p>                    </div>                </div>
+
+                        </div>
+
+                    </div>                                </div>
+
+                    
+
+                    <div class="step">                    <div class="feature-card card slide-in">        </section>
+
+                        <div class="step-number">3</div>
+
+                        <div class="step-content">                        <div class="feature-icon">📊</div>    </main>
+
+                            <h3>Se tabellen</h3>
+
+                            <p>Tabellen sorteras automatiskt efter poäng, målskillnad och gjorda mål enligt SHL-reglerna.</p>                        <h3>Komplett statistik</h3>
+
+                        </div>
+
+                    </div>                        <p>Visa alla 14 SHL-lag med matcher, mål, målskillnad och poäng. Sorterat enligt SHL-reglerna.</p>    <footer>
+
+                    
+
+                    <div class="step">                    </div>        <div class="container">
+
+                        <div class="step-number">4</div>
+
+                        <div class="step-content">                                <p>&copy; 2024 Tabell.top. Alla rättigheter förbehållna.</p>
+
+                            <h3>Återställ eller fortsätt</h3>
+
+                            <p>Återställ simuleringen för att börja om, eller fortsätt fylla i fler matcher för att se slutresultatet.</p>                    <div class="feature-card card slide-in">        </div>
+
+                        </div>
+
+                    </div>                        <div class="feature-icon">🔐</div>    </footer>
+
+                </div>
+
+            </section>                        <h3>Admin-panel</h3>
+
+
+
+            <!-- Call to Action -->                        <p>Säker inloggning med Google OAuth för att registrera riktiga matchresultat efter varje omgång.</p>    <script src="js/main.js"></script>
+
+            <section class="cta">
+
+                <div class="cta-content card">                    </div></body>
+
+                    <h2>Redo att simulera SHL-tabellen?</h2>
+
+                    <p>Starta simuleringen nu och se hur dina favoritlag kan komma att sluta i tabellen!</p>                    </html>
+
+                    <a href="simulator.html" class="btn btn-primary btn-large">
+
+                        🏒 Börja simulera nu                    <div class="feature-card card slide-in">
+
+                    </a>                        <div class="feature-icon">📱</div>
+
+                </div>                        <h3>Responsiv design</h3>
+
+            </section>                        <p>Fungerar perfekt på mobil, surfplatta och dator. Snyggt ljust orange-tema som är piggt och fräscht.</p>
+
+        </div>                    </div>
+
+    </main>                    
+
+                    <div class="feature-card card slide-in">
+
+    <!-- Footer -->                        <div class="feature-icon">🚀</div>
+
+    <footer class="footer">                        <h3>Snabb prestanda</h3>
+
+        <div class="container">                        <p>Byggd med MySQL och PHP för blixtsnabb laddning och uppdatering av data.</p>
+
+            <div class="footer-content">                    </div>
+
+                <div class="footer-section">                </div>
+
+                    <h3>Tabell.top</h3>            </section>
+
+                    <p>Den ultimata verktyget för att simulera SHL-tabellen med dina egna prognoser.</p>
+
+                </div>            <!-- Så här funkar det -->
+
+                <div class="footer-section">            <section class="how-it-works">
+
+                    <h4>Funktioner</h4>                <h2 class="section-title">Så här fungerar det</h2>
+
+                    <ul class="footer-links">                <div class="steps">
+
+                        <li><a href="#features">Realtidssimulering</a></li>                    <div class="step">
+
+                        <li><a href="#features">Interaktiv tabell</a></li>                        <div class="step-number">1</div>
+
+                        <li><a href="#features">Matchanalys</a></li>                        <div class="step-content">
+
+                    </ul>                            <h3>Öppna simulatorn</h3>
+
+                </div>                            <p>Klicka på "Starta Simulator" för att komma till huvudsidan med tabellen och kommande matcher.</p>
+
+                <div class="footer-section">                        </div>
+
+                    <h4>Support</h4>                    </div>
+
+                    <ul class="footer-links">                    
+
+                        <li><a href="/guide">Användarguide</a></li>                    <div class="step">
+
+                        <li><a href="/faq">FAQ</a></li>                        <div class="step-number">2</div>
+
+                        <li><a href="/contact">Kontakt</a></li>                        <div class="step-content">
+
+                    </ul>                            <h3>Fyll i resultat</h3>
+
+                </div>                            <p>Skriv in mål för hemma- och bortalag i matchlistan. Tabellen uppdateras automatiskt!</p>
+
+            </div>                        </div>
+
+            <div class="footer-bottom">                    </div>
+
+                <p>&copy; 2025 Tabell.top. Byggd med ❤️ för ishockeyentusiaster.</p>                    
+
+            </div>                    <div class="step">
+
+        </div>                        <div class="step-number">3</div>
+
+    </footer>                        <div class="step-content">
+
+                            <h3>Se tabellen</h3>
+
+    <!-- JavaScript -->                            <p>Tabellen sorteras automatiskt efter poäng, målskillnad och gjorda mål enligt SHL-reglerna.</p>
+
+    <script src="js/main.js"></script>                        </div>
+
+</body>                    </div>
+
+</html>                    
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Återställ eller fortsätt</h3>
+                            <p>Återställ simuleringen för att börja om, eller fortsätt fylla i fler matcher för att se slutresultatet.</p>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <!-- Call to Action -->
+            <section class="cta">
+                <div class="cta-content card">
+                    <h2>Redo att simulera SHL-tabellen?</h2>
+                    <p>Starta simuleringen nu och se hur dina favoritlag kan komma att sluta i tabellen!</p>
+                    <a href="simulator.html" class="btn btn-primary btn-large">
+                        🏒 Börja simulera nu
+                    </a>
+                </div>
+            </section>
+        </div>
     </main>
 
-    <footer>
+    <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 Tabell.top. Alla rättigheter förbehållna.</p>
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>SHL Simulator v2.0</h3>
+                    <p>Den ultimata verktyget för att simulera SHL-tabellen med dina egna prognoser.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Länkar</h4>
+                    <ul class="footer-links">
+                        <li><a href="/">Hem</a></li>
+                        <li><a href="simulator.html">Simulator</a></li>
+                        <li><a href="admin-login.html">Admin</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Teknik</h4>
+                    <ul class="footer-links">
+                        <li>MySQL Database</li>
+                        <li>PHP Backend</li>
+                        <li>Responsiv Design</li>
+                        <li>Google OAuth</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 SHL Simulator. Byggd med ❤️ för ishockeyentusiaster.</p>
+            </div>
         </div>
     </footer>
 

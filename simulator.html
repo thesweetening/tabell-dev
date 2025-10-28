@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHL Simulator - Tabell.top</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/simulator.css">
+    
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Simulera SHL-matcher och se hur tabellen påverkas i realtid. Prova olika matchresultat och se vem som går till slutspel!">
+    <meta name="keywords" content="SHL, simulator, ishockey, tabell, slutspel, matcher, resultat">
+    
+    <!-- Font Awesome för ikoner -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <a href="/">
+                    <i class="fas fa-table-tennis"></i>
+                    <span>Tabell.top</span>
+                </a>
+            </div>
+            <div class="nav-menu">
+                <a href="/" class="nav-link">Hem</a>
+                <a href="/simulator.html" class="nav-link active">Simulator</a>
+                <a href="/admin" class="nav-link">Admin</a>
+            </div>
+            <div class="nav-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Huvud Simulator Container -->
+    <div class="container">
+        <div class="simulator-container">
+            <!-- Header -->
+            <div class="simulator-header">
+                <h1 class="simulator-title">
+                    <i class="fas fa-hockey-puck"></i>
+                    SHL Simulator
+                </h1>
+                <p class="simulator-subtitle">
+                    Simulera matcher och se hur tabellen påverkas i realtid
+                </p>
+                
+                <div class="simulation-info" id="simulationInfo" style="display: none;">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="simulationMessage">Laddar matchdata...</span>
+                </div>
+            </div>
+
+            <!-- Simulator Layout -->
+            <div class="simulator-layout">
+                <!-- Matchsektion (Vänster) -->
+                <div class="match-section">
+                    <h2>
+                        <i class="fas fa-calendar-alt"></i>
+                        Matcher
+                    </h2>
+
+                    <!-- Match Controls -->
+                    <div class="match-controls">
+                        <div class="control-group">
+                            <label class="control-label" for="roundSelect">Välj omgång:</label>
+                            <select id="roundSelect" class="control-select">
+                                <option value="all">Alla omgångar</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label class="control-label">Snabbval:</label>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline" onclick="simulator.showUnplayedMatches()">
+                                    <i class="fas fa-clock"></i> Ospelat
+                                </button>
+                                <button class="btn btn-sm btn-outline" onclick="simulator.showSimulatedMatches()">
+                                    <i class="fas fa-play"></i> Simulerat
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Matches Container -->
+                    <div class="matches-container">
+                        <div class="matches-loading" id="matchesLoading">
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <p>Laddar matcher...</p>
+                        </div>
+                        
+                        <div id="matchesList" style="display: none;">
+                            <!-- Matches kommer att laddas hit dynamiskt -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabellsektion (Höger) -->
+                <div class="table-section">
+                    <h2>
+                        <i class="fas fa-list-ol"></i>
+                        SHL Tabell
+                    </h2>
+
+                    <!-- Table Controls -->
+                    <div class="table-controls">
+                        <button class="btn btn-primary" onclick="simulator.resetAllMatches()">
+                            <i class="fas fa-undo"></i>
+                            Återställ alla
+                        </button>
+                        <button class="btn btn-secondary" onclick="simulator.simulateAllRemaining()">
+                            <i class="fas fa-random"></i>
+                            Simulera kvarvarande
+                        </button>
+                        <button class="btn btn-outline" onclick="simulator.exportResults()">
+                            <i class="fas fa-download"></i>
+                            Exportera
+                        </button>
+                    </div>
+
+                    <!-- Standings Container -->
+                    <div class="standings-container">
+                        <div class="table-loading" id="tableLoading">
+                            <div class="loading-spinner">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                            <p>Laddar tabell...</p>
+                        </div>
+                        
+                        <div id="standingsTable" style="display: none;">
+                            <table class="shl-table">
+                                <thead>
+                                    <tr>
+                                        <th>Pos</th>
+                                        <th>Lag</th>
+                                        <th>GP</th>
+                                        <th>W</th>
+                                        <th>OTW</th>
+                                        <th>OTL</th>
+                                        <th>L</th>
+                                        <th>GF</th>
+                                        <th>GA</th>
+                                        <th>+/-</th>
+                                        <th>Pts</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="standingsBody">
+                                    <!-- Tabelldata kommer att laddas hit dynamiskt -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Tabell.top</h3>
+                    <p>Simulera SHL-matcher och upptäck hur varje resultat påverkar tabellen.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Funktioner</h4>
+                    <ul>
+                        <li><a href="#features">Realtidssimulering</a></li>
+                        <li><a href="#features">Interaktiv tabell</a></li>
+                        <li><a href="#features">Matchanalys</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="/guide">Användarguide</a></li>
+                        <li><a href="/faq">FAQ</a></li>
+                        <li><a href="/contact">Kontakt</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Tabell.top. Alla rättigheter förbehållna.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/simulator.js"></script>
+</body>
+</html>

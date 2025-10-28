@@ -1,24 +1,44 @@
-# Tabell.top Website
+# SHL Simulator v2.0 - SQL Edition# Tabell.top Website
 
-En modern webbsida för tabell.top med staging/production workflow via GitHub Actions.
 
-## Projektstruktur
 
-```
-/
-├── .github/
+## 🏒 Ny och förbättrad SHL-tabellsimulator med MySQLEn modern webbsida för tabell.top med staging/production workflow via GitHub Actions.
+
+
+
+Denna version använder MySQL istället för Airtable för:## Projektstruktur
+
+- Snabbare prestanda
+
+- Bättre kontroll över data```
+
+- Enklare utveckling och debugging/
+
+- Riktig relationsdatabas├── .github/
+
 │   └── workflows/
-│       ├── deploy-production.yml    # Deployment till production
-│       └── deploy-staging.yml       # Deployment till staging
-├── css/
+
+## 🗄️ Databas: shl_simulator│       ├── deploy-production.yml    # Deployment till production
+
+## 🎨 Tema: Ljus orange│       └── deploy-staging.yml       # Deployment till staging
+
+## 🔐 Auth: Google OAuth├── css/
+
 │   └── style.css                    # Huvudsaklig CSS
-├── js/
-│   └── main.js                      # JavaScript funktionalitet
-├── images/                          # Bilder och media
-├── index.html                       # Hemsida
-├── about.html                       # Om oss-sida
+
+## Funktioner:├── js/
+
+- Real-time tabellsimulering│   └── main.js                      # JavaScript funktionalitet
+
+- Admin-panel för matchresultat├── images/                          # Bilder och media
+
+- Responsiv design├── index.html                       # Hemsida
+
+- Automatiska poängberäkningar├── about.html                       # Om oss-sida
+
 ├── contact.html                     # Kontaktsida
-└── README.md                        # Denna fil
+
+Byggd: 28 oktober 2025└── README.md                        # Denna fil
 ```
 
 ## GitHub Repository Setup
